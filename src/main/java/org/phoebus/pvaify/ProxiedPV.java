@@ -7,12 +7,12 @@
  ******************************************************************************/
 package org.phoebus.pvaify;
 
+import static org.phoebus.pvaify.Proxy.logger;
+
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import org.epics.pva.data.PVAStructure;
-import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
 import org.epics.vtype.VType;
 import org.phoebus.pv.PV;
@@ -20,15 +20,12 @@ import org.phoebus.pv.PVPool;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 
-import static org.phoebus.pvaify.Main.logger;
-
 /** One PV that's proxied to PVA
  *  @author Kay Kasemir
  */
 public class ProxiedPV
 {
-    /** PVA server side of this converter: Detects searches, provides PVA PVs */
-    static PVAServer server;
+    private final Proxy proxy;
 
     private enum State
     {
@@ -44,8 +41,6 @@ public class ProxiedPV
         Disposed
     }
 
-    final Consumer<ProxiedPV> disposal_callback;
-
     /** Client PV from which we proxy data to server PV */
     private final PV client_pv;
 
@@ -60,10 +55,10 @@ public class ProxiedPV
     /** Most recent value that's being forwarded to server PV */
     private PVAStructure server_data;
 
-    public ProxiedPV(final String name, final Consumer<ProxiedPV> disposal_callback) throws Exception
+    public ProxiedPV(final Proxy proxy, final String name) throws Exception
     {
         logger.log(Level.FINE, () -> ">>>>>>>>>> Creating proxy: " + name);
-        this.disposal_callback = disposal_callback;
+        this.proxy = proxy;
         // Create the client PV
         client_pv = PVPool.getPV(name);
         // Subscribe to updates
@@ -119,7 +114,7 @@ public class ProxiedPV
 
                     // Proxy is unused right now, but there could be a new request on the way...
                     // Unregister so any new requests will create a new proxy
-                    disposal_callback.accept(this);
+                    proxy.forgetProxiedPV(this);
                     // Now that this proxy is basically orphaned, stop client ...
                     client_sub.dispose();
                     PVPool.releasePV(client_pv);
@@ -133,6 +128,7 @@ public class ProxiedPV
         catch (Exception ex)
         {
             logger.log(Level.WARNING, "Cannot update server PV " + name + " for " + value, ex);
+            // TODO Dispose proxy
         }
     }
 
@@ -145,6 +141,6 @@ public class ProxiedPV
     private ServerPV createServerPV(final String name, final VType value) throws Exception
     {
         server_data = DataUtil.create(name, value);
-        return server.createPV(name, server_data);
+        return proxy.server.createPV(name, server_data);
     }
 }
