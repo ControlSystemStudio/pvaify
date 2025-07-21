@@ -15,13 +15,12 @@ import org.epics.pva.data.nt.PVAAlarm;
 import org.epics.pva.data.nt.PVAScalar;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.data.nt.PVAScalar.Builder;
-import org.epics.pva.server.ServerPV;
 import org.epics.vtype.Alarm;
 import org.epics.vtype.Time;
 import org.epics.vtype.VNumber;
 import org.epics.vtype.VType;
 
-/** Data utility to convert VType to PVAStrucure
+/** Data utility to convert {@link VType} to {@link PVAStructure} (normative type)
  *  @author Kay Kasemir
  */
 public class DataUtil

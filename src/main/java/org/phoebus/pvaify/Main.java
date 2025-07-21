@@ -16,7 +16,6 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 import org.epics.pva.server.PVAServer;
-import org.epics.pva.server.SearchHandler;
 
 /** CA (PV) to PVAccess converter
  *  @author Kay Kasemir
@@ -52,25 +51,35 @@ public class Main
         System.out.println("| )        \\   /  | )   ( |    ___) (___    | )         | |   ");
         System.out.println("|/          \\_/   |/     \\|    \\_______/    |/          \\_/   ");
 
-        final SearchHandler search_handler =
-            (int seq, int cid, String name,
-             InetSocketAddress client, Consumer<InetSocketAddress> reply_sender) ->
+        ProxiedPV.server = new PVAServer(this::handleSearchRequest);
+    }
+
+    /** Server invokes this for every received name search.
+     *
+     *  @param seq Client's search sequence
+     *  @param cid Client channel ID or -1
+     *  @param name Channel name or <code>null</code>
+     *  @param client Client's address
+     *  @param reply_sender Callback for TCP address of server
+     *  @return <code>true</code> if the search request was handled
+     */
+    private boolean handleSearchRequest(final int seq, final int cid, final String name,
+             final InetSocketAddress client, final Consumer<InetSocketAddress> reply_sender)
+    {
+        logger.log(Level.INFO, () -> client + " searches for " + name + " [CID " + cid + ", seq " + seq + "]");
+
+        // TODO Make this one of the status/control PVs
+        if (name.equals("QUIT"))
         {
-            logger.log(Level.INFO, () -> client + " searches for " + name + " [CID " + cid + ", seq " + seq + "]");
+            logger.log(Level.INFO, "Exit");
+            run.countDown();
+        }
 
-            if (name.equals("QUIT"))
-            {
-                logger.log(Level.INFO, "Exit");
-                run.countDown();
-            }
+        // Create proxy PV unless it already exists
+        pvs.computeIfAbsent(name, this::createProxy);
 
-            // Create proxy PV unless it already exists
-            pvs.computeIfAbsent(name, this::createProxy);
-
-            // Always return false to then check for ServerPV
-            return false;
-        };
-        ProxiedPV.server = new PVAServer(search_handler);
+        // Always return false to then find the ServerPV that we might just have created
+        return false;
     }
 
     /** Create a proxy PV that will receive updates and forward them to PVA
@@ -81,13 +90,21 @@ public class Main
     {
         try
         {
-            return new ProxiedPV(name);
+            return new ProxiedPV(name, this::forgetProxy);
         }
         catch (Exception ex)
         {
             logger.log(Level.WARNING, "Cannot create client PV " + name, ex);
         }
         return null;
+    }
+
+    /** @param pv {@link ProxiedPV} that has been disposed and should no longer been tracked */
+    private void forgetProxy(final ProxiedPV pv)
+    {
+        if (! pvs.remove(pv.getName(), pv))
+            logger.log(Level.WARNING, "Tried to forget unknown PV " + pv.getName(),
+                       new Exception("Stack trace"));
     }
 
     /** Stop */

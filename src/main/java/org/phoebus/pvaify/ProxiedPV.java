@@ -8,6 +8,7 @@
 package org.phoebus.pvaify;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import org.epics.pva.data.PVAStructure;
@@ -16,6 +17,8 @@ import org.epics.pva.server.ServerPV;
 import org.epics.vtype.VType;
 import org.phoebus.pv.PV;
 import org.phoebus.pv.PVPool;
+
+import io.reactivex.rxjava3.disposables.Disposable;
 
 import static org.phoebus.pvaify.Main.logger;
 
@@ -32,11 +35,18 @@ public class ProxiedPV
         /** Created client side, awaiting first value */
         Fresh,
         /** Created server PV with value, maybe updated a few times */
-        Active
+        Active,
+        /** Client PV has been closed, server PV closing down */
+        Disposed
     }
+
+    final Consumer<ProxiedPV> disposal_callback;
 
     /** Client PV from which we proxy data to server PV */
     private final PV client_pv;
+
+    /** Subscription to updates from the client PV */
+    private final Disposable client_sub;
 
     private AtomicReference<State> state = new AtomicReference<>(State.Fresh);
 
@@ -46,13 +56,21 @@ public class ProxiedPV
     /** Most recent value that's being forwarded to server PV */
     private PVAStructure server_data;
 
-    public ProxiedPV(final String name) throws Exception
+    public ProxiedPV(final String name, final Consumer<ProxiedPV> disposal_callback) throws Exception
     {
+        logger.log(Level.FINE, () -> ">>>>>>>>>> Creating proxy: " + name);
+        this.disposal_callback = disposal_callback;
         // Create the client PV
         client_pv = PVPool.getPV(name);
         // Subscribe to updates
         // On first update, when data type is known, create the server PV
-        client_pv.onValueEvent().subscribe(value -> handleClientUpdate(name, value));
+        client_sub = client_pv.onValueEvent().subscribe(value -> handleClientUpdate(name, value));
+    }
+
+    /** @return PV name */
+    public String getName()
+    {
+        return client_pv.getName();
     }
 
     /** Handle a client PV update
@@ -63,6 +81,11 @@ public class ProxiedPV
     private void handleClientUpdate(final String name, final VType value)
     {
         logger.log(Level.FINE, "Client: " + name + " = " + value);
+        if (state.get() == State.Disposed)
+        {
+            logger.log(Level.FINE, "Client: " + name + " update ignored, proxy has been disposed");
+            return;
+        }
 
         try
         {
@@ -78,11 +101,20 @@ public class ProxiedPV
 
                 if (! server_pv.isSubscribed())
                 {
-                    logger.log(Level.FINER, () -> "** Should schedule PV to be removed: " + name + " ---------------------------------------------------- *****");
-    //                PV client_pv = client_pvs.remove(name);
-    //                if (client_pv != null)
-    //                    PVPool.releasePV(client_pv);
-    //                server_pv.close();
+                    logger.log(Level.FINER, () -> "Removing unused proxy: " + name);
+
+                    // Proxy is unused right now, but there could be a new request on the way...
+                    // Unregister so any new requests will create a new proxy
+                    disposal_callback.accept(this);
+                    // Mark as disposed so remaining client updates will be ignored
+                    state.set(State.Disposed);
+                    // Now that this proxy is basically orphaned, stop client ...
+                    client_sub.dispose();
+                    PVPool.releasePV(client_pv);
+                    // ... then server side
+                    server_pv.close();
+
+                    logger.log(Level.FINE, () -> "<<<<<<<<<< Disposed proxy: " + name);
                 }
             }
         }
