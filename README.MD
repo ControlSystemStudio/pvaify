@@ -15,7 +15,8 @@ from CA as PVA PVs.
 - [x] Very first proof of principle:
       Create PV with initial value on first client access
 - [x] Update monitored value, time, alarm for 'double'
+- [ ] Dispose PVs that no longer have a client (after delay...)
+- [ ] Configure ports, use non-standard ports to avoid loops
 - [ ] Update monitored value for some more data types, including display info etc.
 - [ ] Throttling; Favor scalar updates over array updates
-- [ ] Dispose PVs that no longer have a client (after delay...)
 - [ ] Status PVs
