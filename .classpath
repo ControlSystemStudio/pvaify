@@ -16,5 +16,6 @@
 	<classpathentry kind="lib" path="/phoebus-target/target/lib/reactive-streams-1.0.3.jar"/>
 	<classpathentry kind="lib" path="/phoebus-target/target/lib/rxjava-3.0.9.jar"/>
 	<classpathentry kind="lib" path="/phoebus-target/target/lib/vtype-1.0.7.jar"/>
+	<classpathentry kind="lib" path="/phoebus-target/target/lib/epics-util-1.0.7.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

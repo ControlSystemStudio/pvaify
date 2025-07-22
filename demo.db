@@ -1,0 +1,34 @@
+record(calc, "demo:ai1")
+{
+    field(SCAN, "1 second")
+    field(INPA, "demo:ai1")
+    field(CALC, "A<10?A+1:0")
+    field(HIHI, "9")
+    field(HIGH, "5")
+    field(LOW,  "3")
+    field(LOLO, "1")
+    field(HHSV, "MAJOR")
+    field(HSV,  "MINOR")
+    field(LSV,  "MINOR")
+    field(LLSV, "MAJOR")
+    field(HOPR, "15")
+    field(LOPR, "-5")
+    field(PREC, "3")
+    field(EGU,  "Counts")
+    field(FLNK, "demo:wf1")
+}
+
+record(compress, "demo:wf1")
+{
+    field(INP,  "demo:ai1")
+    field(ALG,  "Circular Buffer")
+    field(NSAM, "10")
+}
+
+record(bi, "demo:bool")
+{
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(INP,  "1")
+    field(PINI, "YES")
+}
