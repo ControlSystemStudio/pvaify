@@ -1,7 +1,6 @@
 PVA-i-fy
 ========
 
-
 Explorations for a proxy that allows reading Channel Access (CA) PVs via PV Access (PVA).
 
 The basic use case is a control system that's predominantly using CA,
@@ -56,11 +55,36 @@ PVA, so `ca://` should be the default PV Pool prefix.
 PVs named `XYZ` will be proxied from `ca://XYZ` to PVA `XYZ`,
 and `sim://..` can be used for testing.
 
+
+Building
+--------
+
+```
+git clone https://github.com/ControlSystemStudio/phoebus.git
+cd phoebus
+mvn -DskipTests=true clean install
+cd ..
+
+git clone  https://code.ornl.gov/ky9/pvaify.git
+cd pvaify
+mvn -DskipTests=true clean install
+```
+
+Running
+-------
+
+```
+./pvaify.sh
+```
+
+TODO
+----
+
 - [x] Very first proof of principle:
       Create PV with initial value on first client access
 - [x] Update monitored value, time, alarm for 'double'
 - [x] Dispose PVs that no longer have a client (on next update from client side)
-- [ ] pom.xml
+- [x] pom.xml
 - [ ] Configure ports, use non-standard ports to avoid loops
 - [ ] Update monitored value for some more data types, including display info etc.
 - [ ] Throttling; Favor scalar updates over array updates

@@ -1,16 +1,33 @@
 #!/bin/bash
 
-CP="target/classes"
-CP+=":../phoebus/core/framework/target/classes"
-CP+=":../phoebus/core/pv/target/classes"
-CP+=":../phoebus/core/pv-ca/target/classes"
-CP+=":../phoebus/core/pva/target/classes"
-CP+=":../phoebus/dependencies/phoebus-target/target/lib/jca-2.4.9.jar"
-CP+=":../phoebus/dependencies/phoebus-target/target/lib/vtype-1.0.7.jar"
-CP+=":../phoebus/dependencies/phoebus-target/target/lib/epics-util-1.0.7.jar"
-CP+=":../phoebus/dependencies/phoebus-target/target/lib/reactive-streams-1.0.3.jar"
-CP+=":../phoebus/dependencies/phoebus-target/target/lib/rxjava-3.0.9.jar"
+# Is there a JAR?
+JAR=`echo target/pvaify-*.jar`
 
+if [ -r $JAR ]
+then
+    # Use maven-built jar
+    java -jar $JAR "$@" 
+else
+    # Use IDE-provided classes and dependencies
+    echo "Using development version"
+    CP="target/classes"
+    CP+=":../phoebus/core/framework/target/classes"
+    CP+=":../phoebus/core/pv/target/classes"
+    CP+=":../phoebus/core/pv-ca/target/classes"
+    CP+=":../phoebus/core/pva/target/classes"
+    LIB=`echo ../phoebus/dependencies/phoebus-target/target/lib/jca-[0-9.]*.jar`
+    CP+=":$LIB"
+    LIB=`echo ../phoebus/dependencies/phoebus-target/target/lib/vtype-[0-9.]*.jar`
+    CP+=":$LIB"
+    LIB=`echo ../phoebus/dependencies/phoebus-target/target/lib/epics-util-[0-9.]*.jar`
+    CP+=":$LIB"
+    LIB=`echo ../phoebus/dependencies/phoebus-target/target/lib/reactive-streams-[0-9.]*.jar`
+    CP+=":$LIB"
+    LIB=`echo ../phoebus/dependencies/phoebus-target/target/lib/rxjava-[0-9.]*.jar`
+    CP+=":$LIB"
 
-java -cp $CP org.phoebus.pvaify.Main
+    echo $CP
+
+    java -cp $CP org.phoebus.pvaify.Main "$@"
+fi
 
