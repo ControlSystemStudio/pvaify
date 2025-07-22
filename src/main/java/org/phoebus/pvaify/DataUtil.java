@@ -8,16 +8,25 @@
 package org.phoebus.pvaify;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.epics.pva.data.PVADouble;
+import org.epics.pva.data.PVAString;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVAAlarm;
+import org.epics.pva.data.nt.PVADisplay;
+import org.epics.pva.data.nt.PVAEnum;
 import org.epics.pva.data.nt.PVAScalar;
 import org.epics.pva.data.nt.PVATimeStamp;
+import org.epics.util.stats.Range;
 import org.epics.pva.data.nt.PVAScalar.Builder;
 import org.epics.vtype.Alarm;
+import org.epics.vtype.Display;
 import org.epics.vtype.Time;
+import org.epics.vtype.VDouble;
+import org.epics.vtype.VEnum;
 import org.epics.vtype.VNumber;
+import org.epics.vtype.VString;
 import org.epics.vtype.VType;
 
 /** Data utility to convert {@link VType} to {@link PVAStructure} (normative type)
@@ -48,12 +57,34 @@ public class DataUtil
      */
     public static PVAStructure create(final String name, final VType value) throws Exception
     {
-        Builder<PVADouble> builder;
-        if (value instanceof VNumber num)
-           builder = PVAScalar.doubleScalarBuilder(num.getValue().doubleValue());
+        Builder<?> builder;
+        if (value instanceof VDouble val)
+            builder = PVAScalar.doubleScalarBuilder(val.getValue().doubleValue());
+        else if (value instanceof VNumber val)
+           builder = PVAScalar.intScalarBuilder(val.getValue().intValue());
+        else if (value instanceof VString val)
+            builder = PVAScalar.stringScalarBuilder(val.getValue());
+        else if (value instanceof VEnum val)
+        {
+            final List<String> choices = val.getDisplay().getChoices();
+            final String[] labels = choices.toArray(new String[choices.size()]);
+            builder = new Builder<PVAEnum>()
+                      .value(new PVAEnum(PVAScalar.VALUE_NAME_STRING,
+                                         val.getIndex(), labels));
+        }
         // TODO Handle more data types
         else
             throw new Exception("Data type is not handled");
+
+        final Display display = Display.displayOf(value);
+        if (display != null)
+            builder = builder.display(
+                new PVADisplay(display.getDisplayRange().getMinimum(),
+                               display.getDisplayRange().getMaximum(),
+                               "",
+                               display.getUnit(),
+                               display.getFormat().getMinimumFractionDigits(),
+                               PVADisplay.Form.DEFAULT));
 
         return builder.name(name)
                       .timeStamp(new PVATimeStamp(Time.timeOf(value).getTimestamp()))
@@ -80,8 +111,17 @@ public class DataUtil
         sub.get(2).setValue(alarm.getStatus().ordinal());
         sub.get(3).setValue(alarm.getName());
 
-        if (value instanceof VNumber num)
-            data.get("value").setValue(num.getValue().doubleValue());
+        if (value instanceof VDouble val)
+            data.get("value").setValue(val.getValue().doubleValue());
+        else if (value instanceof VNumber val)
+            data.get("value").setValue(val.getValue().intValue());
+        else if (value instanceof VString val)
+            data.get("value").setValue(val.getValue());
+        else if (value instanceof VEnum val)
+        {
+            // TODO Update enum labels?
+            data.get("value").setValue(val.getIndex());
+        }
         // TODO Handle more data types
         else
             throw new Exception("Value type is not handled");
