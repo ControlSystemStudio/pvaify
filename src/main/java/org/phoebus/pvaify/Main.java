@@ -10,7 +10,7 @@ package org.phoebus.pvaify;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
-/** Proxy from CA (PV) to PVAccess
+/** Proxy from CA (VType PV) to PVAccess
  *  @author Kay Kasemir
  */
 public class Main
