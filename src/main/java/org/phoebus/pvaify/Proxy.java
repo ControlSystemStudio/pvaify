@@ -41,10 +41,9 @@ class Proxy
     /** PVA PVs that we proxy by name */
     private final ConcurrentHashMap<String, ProxiedPV> pvs = new ConcurrentHashMap<>();
 
-    public Proxy() throws Exception
+    public Proxy(final String prefix) throws Exception
     {
         server = new PVAServer(this::handleSearchRequest);
-        String prefix = "Demo:";
         info = new ProxyInfo(prefix , server);
     }
 
@@ -98,26 +97,37 @@ class Proxy
         return false;
     }
 
-   /** @param pv {@link ProxiedPV} that has been disposed and should no longer been tracked */
-   void forgetProxiedPV(final ProxiedPV pv)
-   {
-       if (! pvs.remove(pv.getName(), pv))
-           logger.log(Level.WARNING, "Tried to forget unknown PV " + pv.getName(),
-                      new Exception("Stack trace"));
-   }
+    /** @param pv {@link ProxiedPV} that has been disposed and should no longer been tracked */
+    void forgetProxiedPV(final ProxiedPV pv)
+    {
+        if (! pvs.remove(pv.getName(), pv))
+            logger.log(Level.WARNING, "Tried to forget unknown PV " + pv.getName(),
+                       new Exception("Stack trace"));
+    }
 
-   private void updateInfo()
-   {
-       final int total = pvs.size();
-       int connected = (int) pvs.values().stream().filter(ProxiedPV::isConnected).count();
-       info.update(total, connected);
-   }
+    private int countConnected()
+    {
+        // Concise, but JProfiler shows about twice the CPU load:
+        // pvs.values().stream().filter(ProxiedPV::isConnected).count()
+        int count = 0;
+        for (ProxiedPV pv : pvs.values())
+            if (pv.isConnected())
+                ++count;
+        return count;
+    }
 
-   public void mainLoop() throws InterruptedException
-   {
-       while (! done.await(1, TimeUnit.SECONDS))
-           updateInfo();
-   }
+    private void updateInfo()
+    {
+        final int total = pvs.size();
+        final int connected = countConnected();
+        info.update(total, connected, total - connected);
+    }
+
+    public void mainLoop() throws InterruptedException
+    {
+        while (! done.await(1, TimeUnit.SECONDS))
+            updateInfo();
+    }
 
    public void close()
    {

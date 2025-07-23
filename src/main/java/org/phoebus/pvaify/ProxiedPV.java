@@ -73,7 +73,7 @@ class ProxiedPV
             client_pv = PVPool.getPV(name);
             // Subscribe to updates
             // On first update, when data type is known, create the server PV
-            client_sub = client_pv.onValueEvent().subscribe(value -> handleClientUpdate(name, value));
+            client_sub = client_pv.onValueEvent().subscribe(this::handleClientUpdate);
         }
     }
 
@@ -97,10 +97,9 @@ class ProxiedPV
 
     /** Handle a client PV update
      *  Create PVA PV on first update, then keep updating its value
-     *  @param name PV name
      *  @param value Value received on client side
      */
-    private void handleClientUpdate(final String name, final VType value)
+    private void handleClientUpdate(final VType value)
     {
         logger.log(Level.FINE, "Client: " + name + " = " + value + " [" + state.get() + "]");
         if (state.get() == State.Disposed)
