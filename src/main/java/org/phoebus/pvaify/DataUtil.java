@@ -10,20 +10,21 @@ package org.phoebus.pvaify;
 import java.time.Instant;
 import java.util.List;
 
-import org.epics.pva.data.PVADouble;
-import org.epics.pva.data.PVAString;
+import org.epics.pva.data.PVAByteArray;
+import org.epics.pva.data.PVADoubleArray;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVAAlarm;
 import org.epics.pva.data.nt.PVADisplay;
 import org.epics.pva.data.nt.PVAEnum;
 import org.epics.pva.data.nt.PVAScalar;
-import org.epics.pva.data.nt.PVATimeStamp;
-import org.epics.util.stats.Range;
 import org.epics.pva.data.nt.PVAScalar.Builder;
+import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.vtype.Alarm;
 import org.epics.vtype.Display;
 import org.epics.vtype.Time;
+import org.epics.vtype.VByteArray;
 import org.epics.vtype.VDouble;
+import org.epics.vtype.VDoubleArray;
 import org.epics.vtype.VEnum;
 import org.epics.vtype.VNumber;
 import org.epics.vtype.VString;
@@ -72,9 +73,21 @@ public class DataUtil
                       .value(new PVAEnum(PVAScalar.VALUE_NAME_STRING,
                                          val.getIndex(), labels));
         }
+        else if (value instanceof VDoubleArray val)
+        {
+            final double[] array = val.getData().toArray(new double[val.getSizes().getInt(0)]);
+            builder = new Builder<PVADoubleArray>()
+                      .value(new PVADoubleArray(PVAScalar.VALUE_NAME_STRING, array));
+        }
+        else if (value instanceof VByteArray val)
+        {
+            final byte[] array = val.getData().toArray(new byte[val.getSizes().getInt(0)]);
+            builder = new Builder<PVAByteArray>()
+                      .value(new PVAByteArray(PVAScalar.VALUE_NAME_STRING, true, array));
+        }
         // TODO Handle more data types
         else
-            throw new Exception("Data type is not handled");
+            throw new Exception("Value type is not handled: " + value);
 
         final Display display = Display.displayOf(value);
         if (display != null)
@@ -122,8 +135,16 @@ public class DataUtil
             // TODO Update enum labels?
             data.get("value").setValue(val.getIndex());
         }
+        else if (value instanceof VDoubleArray val)
+            data.get("value")
+                .setValue(val.getData()
+                             .toArray(new double[val.getSizes().getInt(0)]));
+        else if (value instanceof VByteArray val)
+            data.get("value")
+                .setValue(val.getData()
+                             .toArray(new byte[val.getSizes().getInt(0)]));
         // TODO Handle more data types
         else
-            throw new Exception("Value type is not handled");
+            throw new Exception("Value type is not handled: " + value);
     }
 }
