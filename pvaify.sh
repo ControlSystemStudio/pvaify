@@ -3,10 +3,14 @@
 # Is there a JAR?
 JAR=`echo target/pvaify-*.jar`
 
+# Client side
+export EPICS_CA_ADDR_LIST="127.0.0.1 webopi.sns.gov:5066 160.91.228.17"
+export EPICS_CA_AUTO_ADDR_LIST=false
+
 if [ -r $JAR ]
 then
     # Use maven-built jar
-    java -jar $JAR "$@" 
+    java -Djca.use_env=true -jar $JAR "$@" 
 else
     # Use IDE-provided classes and dependencies
     echo "Using development version"
@@ -28,6 +32,6 @@ else
 
     echo $CP
 
-    java -cp $CP org.phoebus.pvaify.Main "$@"
+    java -Djca.use_env=true -cp $CP org.phoebus.pvaify.Main "$@"
 fi
 

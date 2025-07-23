@@ -123,10 +123,25 @@ class Proxy
         info.update(total, connected, total - connected);
     }
 
+    private void cullUnused()
+    {
+        for (ProxiedPV pv : pvs.values())
+            if (! (pv.isConnected() && pv.isSubscribed())
+                    &&
+                    pv.getSecsInState() > 5.0)
+            {
+                logger.log(Level.FINER, () -> "Removing unused proxy " + pv);
+                pv.close();
+            }
+    }
+
     public void mainLoop() throws InterruptedException
     {
         while (! done.await(1, TimeUnit.SECONDS))
+        {
             updateInfo();
+            cullUnused();
+        }
     }
 
    public void close()
