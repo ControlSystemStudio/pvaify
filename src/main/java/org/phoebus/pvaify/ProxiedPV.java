@@ -47,7 +47,7 @@ class ProxiedPV
     private AtomicReference<State> state = new AtomicReference<>(State.Created);
 
     /** Client PV from which we proxy data to server PV */
-    private PV client_pv;
+    private volatile PV client_pv;
 
     /** Subscription to updates from the client PV */
     private Disposable client_sub;
@@ -81,6 +81,18 @@ class ProxiedPV
     public String getName()
     {
         return name;
+    }
+
+    /** @return Is the proxy connected on the client side? */
+    public boolean isConnected()
+    {
+        final PV safe_pv = client_pv;
+        if (safe_pv == null)
+            return false;
+        VType value = safe_pv.read();
+        if (PV.isDisconnected(value))
+            return false;
+        return true;
     }
 
     /** Handle a client PV update

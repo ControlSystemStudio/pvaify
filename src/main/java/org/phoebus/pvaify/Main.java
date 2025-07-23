@@ -32,6 +32,7 @@ public class Main
         System.out.println("|/          \\_/   |/     \\|    \\_______/    |/          \\_/   ");
 
         final Proxy proxy = new Proxy();
-        proxy.awaitShutdown();
+        proxy.mainLoop();
+        proxy.close();
     }
 }

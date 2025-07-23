@@ -23,6 +23,14 @@ record(compress, "demo:wf1")
     field(INP,  "demo:ai1")
     field(ALG,  "Circular Buffer")
     field(NSAM, "10")
+    field(FLNK, "demo:wf2")
+}
+
+record(waveform, "demo:wf2")
+{
+    field(INP,  "demo:wf1")
+    field(FTVL, "CHAR")
+    field(NELM, "10")
 }
 
 record(bi, "demo:bool")

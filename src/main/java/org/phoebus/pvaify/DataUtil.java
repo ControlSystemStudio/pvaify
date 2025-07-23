@@ -52,6 +52,7 @@ public class DataUtil
 
 
     /** Create PVA from VType
+     *  @param name PV name
      *  @param value {@link VType} value
      *  @return {@link PVAStructure}
      *  @throws Exception on error

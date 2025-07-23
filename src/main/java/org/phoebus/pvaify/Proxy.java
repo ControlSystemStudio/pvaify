@@ -10,6 +10,7 @@ package org.phoebus.pvaify;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,17 +30,22 @@ class Proxy
     public static Logger logger;
 
     /** Proxy runs until this counts to zero */
-    private final CountDownLatch run = new CountDownLatch(1);
+    private final CountDownLatch done = new CountDownLatch(1);
 
     /** PVA server side: Detects searches, provides PVA PVs */
     final PVAServer server;
 
+    /** Proxy info PVs */
+    private final ProxyInfo info;
+
     /** PVA PVs that we proxy by name */
     private final ConcurrentHashMap<String, ProxiedPV> pvs = new ConcurrentHashMap<>();
 
-    Proxy() throws Exception
+    public Proxy() throws Exception
     {
         server = new PVAServer(this::handleSearchRequest);
+        String prefix = "Demo:";
+        info = new ProxyInfo(prefix , server);
     }
 
     /** Server invokes this for every received name search.
@@ -61,23 +67,27 @@ class Proxy
         if (name.equals("QUIT"))
         {
             logger.log(Level.INFO, "Exit");
-            run.countDown();
+            done.countDown();
         }
 
-        // Create proxy PV unless it already exists
-        final ProxiedPV pv = pvs.computeIfAbsent(name, pv_name -> new ProxiedPV(this, pv_name));
-        try
-        {   // Start the proxy PV
-            //
-            // This might fail to connect, then dispose the PV and remove it from `pvs`.
-            // To avoid 'recursive update' errors, adding the PV to pvs via computeIfAbsent
-            // and starting (and potentially again removing the PV) thus need to be
-            // separate steps
-            pv.start();
-        }
-        catch (Exception ex)
+        // Info PVs are already handled by `server`, no need to proxy
+        if (! info.isInfoPV(name))
         {
-            logger.log(Level.WARNING, "Cannot create client PV " + name, ex);
+            // Create proxy PV unless it already exists
+            final ProxiedPV pv = pvs.computeIfAbsent(name, pv_name -> new ProxiedPV(this, pv_name));
+            try
+            {   // Start the proxy PV
+                //
+                // This might fail to connect, then dispose the PV and remove it from `pvs`.
+                // To avoid 'recursive update' errors, adding the PV to pvs via computeIfAbsent
+                // and starting (and potentially again removing the PV) thus need to be
+                // separate steps
+                pv.start();
+            }
+            catch (Exception ex)
+            {
+                logger.log(Level.WARNING, "Cannot create client PV " + name, ex);
+            }
         }
 
         // Always return false.
@@ -96,13 +106,21 @@ class Proxy
                       new Exception("Stack trace"));
    }
 
-   void close()
+   private void updateInfo()
    {
-       server.close();
+       final int total = pvs.size();
+       int connected = (int) pvs.values().stream().filter(ProxiedPV::isConnected).count();
+       info.update(total, connected);
    }
 
-   void awaitShutdown() throws InterruptedException
+   public void mainLoop() throws InterruptedException
    {
-       run.await();
+       while (! done.await(1, TimeUnit.SECONDS))
+           updateInfo();
+   }
+
+   public void close()
+   {
+       server.close();
    }
 }
