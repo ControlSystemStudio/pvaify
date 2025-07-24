@@ -9,6 +9,9 @@ package org.phoebus.pvaify;
 
 import static org.phoebus.pvaify.Proxy.logger;
 
+import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 
 import org.epics.pva.data.PVAStructure;
@@ -24,9 +27,14 @@ import io.reactivex.rxjava3.disposables.Disposable;
  */
 class ProxiedPV
 {
+    /** Proxy to which this PV belongs */
     private final Proxy proxy;
 
+    /** Name of the PV */
     private final String name;
+
+    /** Send reply to PVA client which searched for this PV */
+    private final AtomicReference<Consumer<InetSocketAddress>> reply_sender = new AtomicReference<>();
 
     /** Proxy lifecycle state */
     private ProxiedPVState state = new ProxiedPVState();
@@ -43,13 +51,19 @@ class ProxiedPV
     /** Most recent value that's being forwarded to server PV */
     private PVAStructure server_data;
 
-    ProxiedPV(final Proxy proxy, final String name)
+    /** @param proxy Proxy that holds this PV
+     *  @param name PV name
+     *  @param reply_sender Allows sending reply to PVA client that searched for this PV
+     */
+    ProxiedPV(final Proxy proxy, final String name, final Consumer<InetSocketAddress> reply_sender)
     {
-        logger.log(Level.FINE, () -> ">>>>>>>>>> Creating " + this);
         this.proxy = proxy;
         this.name = name;
+        this.reply_sender.set(reply_sender);
+        logger.log(Level.FINE, () -> ">>>>>>>>>> Creating " + this);
     }
 
+    /** Start CA client, subscribe to value updates */
     void start() throws Exception
     {
         if (state.compareAndSet(ProxiedPVState.State.Created, ProxiedPVState.State.Started))
@@ -68,6 +82,7 @@ class ProxiedPV
         return name;
     }
 
+    /** @return How long have we been in current state [secs] */
     public double getSecsInState()
     {
         return state.getSecsInState();
@@ -98,10 +113,10 @@ class ProxiedPV
      */
     private void handleClientUpdate(final VType value)
     {
-        logger.log(Level.FINE, "Client: " + name + " = " + value + " [" + state.get() + "]");
+        logger.log(Level.FINER, () -> "Client: " + name + " = " + value + " [" + state.get() + "]");
         if (state.get() == ProxiedPVState.State.Disposed)
         {
-            logger.log(Level.FINE, "Client: " + name + " update ignored, proxy has been disposed");
+            logger.log(Level.FINER, () -> "Client: " + name + " update ignored, proxy has been disposed");
             return;
         }
 
@@ -109,7 +124,17 @@ class ProxiedPV
         {
             // If this is the first update, create server PV with that initial value
             if (state.compareAndSet(ProxiedPVState.State.Started, ProxiedPVState.State.FreshServer))
+            {
                 server_pv = createServerPV(name, value);
+
+                // First time around, send a reply, then release the reply_sender to GC
+                final Consumer<InetSocketAddress> rs = reply_sender.getAndSet(null);
+                if (rs != null)
+                {
+                    logger.log(Level.FINE, () -> "---------> Reply to search for " + this);
+                    rs.accept(null);
+                }
+            }
             else
             {
                 // Update server's PV data from received value

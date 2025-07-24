@@ -40,3 +40,8 @@ record(bi, "demo:bool")
     field(INP,  "1")
     field(PINI, "YES")
 }
+
+record(int64in, "large")
+{
+}
+

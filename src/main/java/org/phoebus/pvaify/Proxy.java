@@ -60,7 +60,7 @@ class Proxy
                                         final InetSocketAddress client,
                                         final Consumer<InetSocketAddress> reply_sender)
     {
-        logger.log(Level.INFO, () -> client + " searches for " + name + " [CID " + cid + ", seq " + seq + "]");
+        logger.log(Level.FINE, () -> client + " searches for " + name + " [CID " + cid + ", seq " + seq + "]");
 
         // TODO Make this one of the status/control PVs
         if (name.equals("QUIT"))
@@ -73,7 +73,7 @@ class Proxy
         if (! info.isInfoPV(name))
         {
             // Create proxy PV unless it already exists
-            final ProxiedPV pv = pvs.computeIfAbsent(name, pv_name -> new ProxiedPV(this, pv_name));
+            final ProxiedPV pv = pvs.computeIfAbsent(name, pv_name -> new ProxiedPV(this, pv_name, reply_sender));
             try
             {   // Start the proxy PV
                 //
@@ -125,10 +125,14 @@ class Proxy
 
     private void cullUnused()
     {
+        // Need a long timeout because
+        // client searches will go down to once every 15 sec.
+        // and we don't want to cull channels that were created,
+        // but we haven't seen the next, successful search
         for (ProxiedPV pv : pvs.values())
             if (! (pv.isConnected() && pv.isSubscribed())
                     &&
-                    pv.getSecsInState() > 5.0)
+                    pv.getSecsInState() > 60.0)
             {
                 logger.log(Level.FINER, () -> "Removing unused proxy " + pv);
                 pv.close();
