@@ -9,9 +9,14 @@ package org.phoebus.pvaify;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 import org.epics.pva.data.PVAByteArray;
+import org.epics.pva.data.PVAData;
 import org.epics.pva.data.PVADoubleArray;
+import org.epics.pva.data.PVAFloatArray;
+import org.epics.pva.data.PVAIntArray;
+import org.epics.pva.data.PVAShortArray;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVAAlarm;
 import org.epics.pva.data.nt.PVADisplay;
@@ -26,7 +31,10 @@ import org.epics.vtype.VByteArray;
 import org.epics.vtype.VDouble;
 import org.epics.vtype.VDoubleArray;
 import org.epics.vtype.VEnum;
+import org.epics.vtype.VFloatArray;
+import org.epics.vtype.VIntArray;
 import org.epics.vtype.VNumber;
+import org.epics.vtype.VShortArray;
 import org.epics.vtype.VString;
 import org.epics.vtype.VType;
 
@@ -35,6 +43,18 @@ import org.epics.vtype.VType;
  */
 public class DataUtil
 {
+    /** @param o Object
+     *  @param max_len Maximum string length
+     *  @return String representation of the object
+     */
+    public static String shorten(final Object o, final int max_len)
+    {
+        String text = Objects.toString(o);
+        if (text.length() > max_len)
+            return text.substring(0, max_len) + "...";
+        return text;
+    }
+
     /** @param alarm VType alarm
      *  @return PVA alarm structure
      */
@@ -49,7 +69,6 @@ public class DataUtil
                                     : PVAAlarm.AlarmStatus.UNDEFINED;
         return new PVAAlarm(severity, status, alarm.getStatus().name());
     }
-
 
     /** Create PVA from VType
      *  @param name PV name
@@ -80,6 +99,24 @@ public class DataUtil
             builder = new Builder<PVADoubleArray>()
                       .value(new PVADoubleArray(PVAScalar.VALUE_NAME_STRING, array));
         }
+        else if (value instanceof VFloatArray val)
+        {
+            final float[] array = val.getData().toArray(new float[val.getSizes().getInt(0)]);
+            builder = new Builder<PVAFloatArray>()
+                      .value(new PVAFloatArray(PVAScalar.VALUE_NAME_STRING, array));
+        }
+        else if (value instanceof VIntArray val)
+        {
+            final int[] array = val.getData().toArray(new int[val.getSizes().getInt(0)]);
+            builder = new Builder<PVAIntArray>()
+                      .value(new PVAIntArray(PVAScalar.VALUE_NAME_STRING, true, array));
+        }
+        else if (value instanceof VShortArray val)
+        {
+            final short[] array = val.getData().toArray(new short[val.getSizes().getInt(0)]);
+            builder = new Builder<PVAShortArray>()
+                      .value(new PVAShortArray(PVAScalar.VALUE_NAME_STRING, true, array));
+        }
         else if (value instanceof VByteArray val)
         {
             final byte[] array = val.getData().toArray(new byte[val.getSizes().getInt(0)]);
@@ -108,44 +145,47 @@ public class DataUtil
 
     /** Update PVA from VType
      *  @param data {@link PVAStructure} to update
-     *  @param value {@link VType} from which to update
+     *  @param new_value {@link VType} from which to update
      *  @throws Exception on error
      */
-    public static  void update(final PVAStructure data, final VType value) throws Exception
+    public static void update(final PVAStructure data, final VType new_value) throws Exception
     {
         // Update server's PV data from received value
-        final Instant time = Time.timeOf(value).getTimestamp();
+        final Instant time = Time.timeOf(new_value).getTimestamp();
         PVAStructure sub = data.get("timeStamp");
         sub.get(1).setValue(time.getEpochSecond());
         sub.get(2).setValue(time.getNano());
 
-        final Alarm alarm = Alarm.alarmOf(value);
+        final Alarm alarm = Alarm.alarmOf(new_value);
         sub = data.get("alarm");
         sub.get(1).setValue(alarm.getSeverity().ordinal());
         sub.get(2).setValue(alarm.getStatus().ordinal());
         sub.get(3).setValue(alarm.getName());
 
-        if (value instanceof VDouble val)
-            data.get("value").setValue(val.getValue().doubleValue());
-        else if (value instanceof VNumber val)
-            data.get("value").setValue(val.getValue().intValue());
-        else if (value instanceof VString val)
-            data.get("value").setValue(val.getValue());
-        else if (value instanceof VEnum val)
+        final PVAData value = data.get("value");
+        if (new_value instanceof VDouble val)
+            value.setValue(val.getValue().doubleValue());
+        else if (new_value instanceof VNumber val)
+            value.setValue(val.getValue().intValue());
+        else if (new_value instanceof VString val)
+            value.setValue(val.getValue());
+        else if (new_value instanceof VEnum val)
         {
             // TODO Update enum labels?
-            data.get("value").setValue(val.getIndex());
+            value.setValue(val.getIndex());
         }
-        else if (value instanceof VDoubleArray val)
-            data.get("value")
-                .setValue(val.getData()
-                             .toArray(new double[val.getSizes().getInt(0)]));
-        else if (value instanceof VByteArray val)
-            data.get("value")
-                .setValue(val.getData()
-                             .toArray(new byte[val.getSizes().getInt(0)]));
+        else if (new_value instanceof VDoubleArray val)
+            value.setValue(val.getData().toArray(new double[val.getSizes().getInt(0)]));
+        else if (new_value instanceof VFloatArray val)
+            value.setValue(val.getData().toArray(new float[val.getSizes().getInt(0)]));
+        else if (new_value instanceof VIntArray val)
+            value.setValue(val.getData().toArray(new int[val.getSizes().getInt(0)]));
+        else if (new_value instanceof VShortArray val)
+            value.setValue(val.getData().toArray(new short[val.getSizes().getInt(0)]));
+        else if (new_value instanceof VByteArray val)
+            value.setValue(val.getData().toArray(new byte[val.getSizes().getInt(0)]));
         // TODO Handle more data types
         else
-            throw new Exception("Value type is not handled: " + value);
+            throw new Exception("Value type is not handled: " + new_value);
     }
 }

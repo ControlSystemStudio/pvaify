@@ -113,10 +113,25 @@ class ProxiedPV
      */
     private void handleClientUpdate(final VType value)
     {
-        logger.log(Level.FINER, () -> "Client: " + name + " = " + value + " [" + state.get() + "]");
+        logger.log(Level.FINER, () -> "Client: " + name + " = " + DataUtil.shorten(value, 80) + " [" + state.get() + "]");
         if (state.get() == ProxiedPVState.State.Disposed)
         {
             logger.log(Level.FINER, () -> "Client: " + name + " update ignored, proxy has been disposed");
+            return;
+        }
+
+        // When core-pv-ca connects to a large array, it will disconnect and then
+        // re-connect at a lower priority. As a result, we see an initial 'disconnected' value
+        // of type Double(NaN).
+        // Soon afterwards we receive the array data.
+        // Skip that initial 'disconnected' value!
+        // The Proxy's server side does not exist, yet, so no change to our clients.
+        // If we did create the proxy's server PV with Double(NaN), the following update
+        // with array data would be a type change that's resulting in a disconnect
+        // -> connect, disconnect, ... loop
+        if (state.get() == ProxiedPVState.State.Started  &&  PV.isDisconnected(value))
+        {
+            logger.log(Level.FINER, () -> "Client: " + name + " ignored first 'disconnected' value from array re-connect");
             return;
         }
 
@@ -139,7 +154,7 @@ class ProxiedPV
             {
                 // Update server's PV data from received value
                 DataUtil.update(server_data, value);
-                logger.log(Level.FINER, () -> "Sending update : " + server_data);
+                logger.log(Level.FINER, () -> "Sending update : " + DataUtil.shorten(server_data, 80));
                 server_pv.update(server_data);
 
                 // Do we have at least one client to our server side?
@@ -152,7 +167,7 @@ class ProxiedPV
         }
         catch (Exception ex)
         {
-            logger.log(Level.WARNING, "Cannot update server PV " + name + " for " + value, ex);
+            logger.log(Level.WARNING, "Cannot update server PV " + name + " for " + DataUtil.shorten(value, 80), ex);
             close();
         }
     }
