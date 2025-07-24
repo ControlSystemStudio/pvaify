@@ -109,19 +109,19 @@ public class DataUtil
         {
             final int[] array = val.getData().toArray(new int[val.getSizes().getInt(0)]);
             builder = new Builder<PVAIntArray>()
-                      .value(new PVAIntArray(PVAScalar.VALUE_NAME_STRING, true, array));
+                      .value(new PVAIntArray(PVAScalar.VALUE_NAME_STRING, false, array));
         }
         else if (value instanceof VShortArray val)
         {
             final short[] array = val.getData().toArray(new short[val.getSizes().getInt(0)]);
             builder = new Builder<PVAShortArray>()
-                      .value(new PVAShortArray(PVAScalar.VALUE_NAME_STRING, true, array));
+                      .value(new PVAShortArray(PVAScalar.VALUE_NAME_STRING, false, array));
         }
         else if (value instanceof VByteArray val)
         {
             final byte[] array = val.getData().toArray(new byte[val.getSizes().getInt(0)]);
             builder = new Builder<PVAByteArray>()
-                      .value(new PVAByteArray(PVAScalar.VALUE_NAME_STRING, true, array));
+                      .value(new PVAByteArray(PVAScalar.VALUE_NAME_STRING, false, array));
         }
         // TODO Handle more data types
         else
