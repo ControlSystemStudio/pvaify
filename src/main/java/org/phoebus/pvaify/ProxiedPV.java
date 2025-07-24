@@ -120,6 +120,8 @@ class ProxiedPV
             return;
         }
 
+        proxy.client_update_counter.incrementAndGet();
+
         // When core-pv-ca connects to a large array, it will disconnect and then
         // re-connect at a lower priority. As a result, we see an initial 'disconnected' value
         // of type Double(NaN).
@@ -156,6 +158,7 @@ class ProxiedPV
                 DataUtil.update(server_data, value);
                 logger.log(Level.FINER, () -> "Sending update : " + DataUtil.shorten(server_data, 80));
                 server_pv.update(server_data);
+                proxy.server_update_counter.incrementAndGet();
 
                 // Do we have at least one client to our server side?
                 // Then we're active

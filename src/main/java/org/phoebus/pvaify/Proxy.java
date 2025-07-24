@@ -11,6 +11,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,6 +42,15 @@ class Proxy
     /** PVA PVs that we proxy by name */
     private final ConcurrentHashMap<String, ProxiedPV> pvs = new ConcurrentHashMap<>();
 
+    /** Counter for received name searches */
+    private final AtomicInteger search_counter = new AtomicInteger();
+
+    /** Counter for subscription updates received on client side */
+    final AtomicInteger client_update_counter = new AtomicInteger();
+
+    /** Counter for updates sent to server side */
+    final AtomicInteger server_update_counter = new AtomicInteger();
+
     public Proxy(final String prefix) throws Exception
     {
         server = new PVAServer(this::handleSearchRequest);
@@ -61,6 +71,8 @@ class Proxy
                                         final Consumer<InetSocketAddress> reply_sender)
     {
         logger.log(Level.FINE, () -> client + " searches for " + name + " [CID " + cid + ", seq " + seq + "]");
+
+        search_counter.incrementAndGet();
 
         // TODO Make this one of the status/control PVs
         if (name.equals("QUIT"))
@@ -105,46 +117,37 @@ class Proxy
                        new Exception("Stack trace"));
     }
 
-    private int countConnected()
-    {
-        // Concise, but JProfiler shows about twice the CPU load:
-        // pvs.values().stream().filter(ProxiedPV::isConnected).count()
-        int count = 0;
-        for (ProxiedPV pv : pvs.values())
-            if (pv.isConnected())
-                ++count;
-        return count;
-    }
-
-    private void updateInfo()
-    {
-        final int total = pvs.size();
-        final int connected = countConnected();
-        info.update(total, connected, total - connected);
-    }
-
-    private void cullUnused()
-    {
-        // Need a long timeout because
-        // client searches will go down to once every 15 sec.
-        // and we don't want to cull channels that were created,
-        // but we haven't seen the next, successful search
-        for (ProxiedPV pv : pvs.values())
-            if (! (pv.isConnected() && pv.isSubscribed())
-                    &&
-                    pv.getSecsInState() > 60.0)
-            {
-                logger.log(Level.FINER, () -> "Removing unused proxy " + pv);
-                pv.close();
-            }
-    }
-
     public void mainLoop() throws InterruptedException
     {
         while (! done.await(1, TimeUnit.SECONDS))
         {
-            updateInfo();
-            cullUnused();
+            int total = 0, connected = 0;
+            for (ProxiedPV pv : pvs.values())
+            {
+                // Collect stats
+                ++total;
+                final boolean is_connected = pv.isConnected();
+                if (is_connected)
+                    ++connected;
+
+                // Remove unused proxies.
+                // Need a long timeout because client searches will settle to 15 sec
+                // and we don't want to cull channels between a search that triggered
+                // their creation and the next search that'll then find them.
+                // (in case we don't get an earlier search reply out)
+                if (! (is_connected && pv.isSubscribed())
+                    &&
+                    pv.getSecsInState() > 60.0)
+                {
+                    logger.log(Level.FINER, () -> "Removing unused proxy " + pv);
+                    pv.close();
+                }
+            }
+
+            info.update(total, connected, total - connected,
+                        search_counter.getAndSet(0),
+                        client_update_counter.getAndSet(0),
+                        server_update_counter.getAndSet(0));
         }
     }
 
