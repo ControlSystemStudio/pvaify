@@ -86,7 +86,7 @@ TODO
 - [x] Dispose PVs that no longer have a client (on next update from client side)
 - [x] pom.xml
 - [ ] Status PVs
-- [ ] Clean ProxiedPVs which are disconnected on CA side and PVA client is gone as well
+- [X] Clean ProxiedPVs which are disconnected on CA side and PVA client is gone as well
 - [ ] Configure ports, use non-standard ports to avoid loops
 - [ ] Update monitored value for some more data types, including display info etc.
 - [ ] Throttling; Favor scalar updates over array updates
