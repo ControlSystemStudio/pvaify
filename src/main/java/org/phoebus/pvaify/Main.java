@@ -7,8 +7,12 @@
  ******************************************************************************/
 package org.phoebus.pvaify;
 
+import java.io.FileInputStream;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
+import java.util.prefs.Preferences;
+
+import org.phoebus.framework.preferences.PropertyPreferenceLoader;
 
 /** Proxy from CA (VType PV) to PVAccess
  *  @author Kay Kasemir
@@ -19,8 +23,8 @@ public class Main
     {
         System.out.println("Command-line arguments:");
         System.out.println();
-        System.out.println("-help               - This text");
-        System.out.println("-prefix 'proxy:'    - Status PV prefix");
+        System.out.println("-help                   - This text");
+        System.out.println("-settings settings.ini  - Import settings from file");
         System.out.println();
     }
 
@@ -41,7 +45,8 @@ public class Main
         LogManager.getLogManager().readConfiguration(Main.class.getResourceAsStream("/logging.properties"));
         Proxy.logger = Logger.getLogger(Main.class.getPackageName());
 
-        String prefix = "proxy:";
+        Preferences prefs = Preferences.userNodeForPackage(org.phoebus.pv.ca.JCA_PVFactory.class);
+        prefs.putBoolean("dbe_property_supported", true);
 
         for (int i=0; i<args.length; ++i)
         {
@@ -50,20 +55,20 @@ public class Main
                 help();
                 return;
             }
-            if (args[i].startsWith("-p"))
+            if (args[i].startsWith("-s"))
             {
                 if (i+1 >= args.length)
                 {
                     help();
-                    System.err.println("Missing -prefix value");
+                    System.err.println("Missing -settings filename");
                     return;
                 }
-                prefix = args[i+1];
+                PropertyPreferenceLoader.load(new FileInputStream(args[i+1]));
                 ++i;
             }
         }
 
-        final Proxy proxy = new Proxy(prefix);
+        final Proxy proxy = new Proxy(ProxyPreferences.prefix);
         proxy.mainLoop();
         proxy.close();
     }

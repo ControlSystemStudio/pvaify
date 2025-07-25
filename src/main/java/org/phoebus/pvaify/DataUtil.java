@@ -15,8 +15,10 @@ import org.epics.pva.data.PVAByteArray;
 import org.epics.pva.data.PVAData;
 import org.epics.pva.data.PVADoubleArray;
 import org.epics.pva.data.PVAFloatArray;
+import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAIntArray;
 import org.epics.pva.data.PVAShortArray;
+import org.epics.pva.data.PVAString;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVAAlarm;
 import org.epics.pva.data.nt.PVADisplay;
@@ -143,6 +145,32 @@ public class DataUtil
                       .build();
     }
 
+    /** Update PVA 'display' from VType
+     *  @param data {@link PVAStructure} to update
+     *  @param new_value {@link VType} from which to update
+     *  @throws Exception on error
+     */
+    private static void updateDisplay(final PVAStructure data, final VType new_value) throws Exception
+    {
+        final Display display = Display.displayOf(new_value);
+        if (display == null)
+            return;
+
+        final PVAStructure data_display = data.get("display");
+        if (data_display == null)
+            return;
+
+        PVAString txt = data_display.get("units");
+        if (txt != null)
+            txt.set(display.getUnit());
+
+        PVAInt dec = data_display.get("precision");
+        if (dec != null)
+            dec.set(display.getFormat().getMinimumFractionDigits());
+
+        // TODO Update more elements...
+    }
+
     /** Update PVA from VType
      *  @param data {@link PVAStructure} to update
      *  @param new_value {@link VType} from which to update
@@ -187,5 +215,7 @@ public class DataUtil
         // TODO Handle more data types
         else
             throw new Exception("Value type is not handled: " + new_value);
+
+        updateDisplay(data, new_value);
     }
 }

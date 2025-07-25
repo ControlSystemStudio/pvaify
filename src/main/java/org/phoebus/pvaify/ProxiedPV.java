@@ -60,7 +60,7 @@ class ProxiedPV
         this.proxy = proxy;
         this.name = name;
         this.reply_sender.set(reply_sender);
-        logger.log(Level.FINE, () -> ">>>>>>>>>> Creating " + this);
+        logger.log(Level.FINE, () -> "-------->> Creating " + this);
     }
 
     /** Start CA client, subscribe to value updates */
@@ -212,7 +212,7 @@ class ProxiedPV
         if (server_pv != null)
             server_pv.close();
 
-        logger.log(Level.FINE, () -> "<<<<<<<<<< Disposed " + this);
+        logger.log(Level.FINE, () -> "<<-------- Disposed " + this);
     }
 
     @Override
