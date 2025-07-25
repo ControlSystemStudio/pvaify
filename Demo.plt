@@ -5,7 +5,7 @@
   <update_period>3.0</update_period>
   <scroll_step>5</scroll_step>
   <scroll>true</scroll>
-  <start>-3 minutes -41.039 seconds</start>
+  <start>-3 minutes -47.554 seconds</start>
   <end>now</end>
   <archive_rescale>STAGGER</archive_rescale>
   <foreground>
@@ -34,8 +34,25 @@
         <green>0</green>
         <blue>0</blue>
       </color>
-      <min>-22.700000000000003</min>
-      <max>476.7</max>
+      <min>-10.100000000000001</min>
+      <max>212.1</max>
+      <grid>false</grid>
+      <autoscale>true</autoscale>
+      <log_scale>false</log_scale>
+    </axis>
+    <axis>
+      <visible>true</visible>
+      <name>Value 2</name>
+      <use_axis_name>false</use_axis_name>
+      <use_trace_names>true</use_trace_names>
+      <right>true</right>
+      <color>
+        <red>0</red>
+        <green>0</green>
+        <blue>0</blue>
+      </color>
+      <min>-15.55</min>
+      <max>326.55</max>
       <grid>false</grid>
       <autoscale>true</autoscale>
       <log_scale>false</log_scale>
@@ -45,7 +62,7 @@
   </annotations>
   <pvlist>
     <pv>
-      <display_name>pva://proxy:pvtotal</display_name>
+      <display_name>Total</display_name>
       <visible>true</visible>
       <name>pva://proxy:pvtotal</name>
       <axis>0</axis>
@@ -65,7 +82,7 @@
       <request>OPTIMIZED</request>
     </pv>
     <pv>
-      <display_name>pva://proxy:connected</display_name>
+      <display_name>Connected</display_name>
       <visible>true</visible>
       <name>pva://proxy:connected</name>
       <axis>0</axis>
@@ -85,7 +102,7 @@
       <request>OPTIMIZED</request>
     </pv>
     <pv>
-      <display_name>pva://proxy:unconnected</display_name>
+      <display_name>Disconnected</display_name>
       <visible>true</visible>
       <name>pva://proxy:unconnected</name>
       <axis>0</axis>
@@ -93,6 +110,46 @@
         <red>255</red>
         <green>0</green>
         <blue>0</blue>
+      </color>
+      <trace_type>AREA</trace_type>
+      <linewidth>2</linewidth>
+      <line_style>SOLID</line_style>
+      <point_type>NONE</point_type>
+      <point_size>2</point_size>
+      <waveform_index>0</waveform_index>
+      <period>0.0</period>
+      <ring_size>5000</ring_size>
+      <request>OPTIMIZED</request>
+    </pv>
+    <pv>
+      <display_name>Searches</display_name>
+      <visible>true</visible>
+      <name>proxy:existTestRate</name>
+      <axis>1</axis>
+      <color>
+        <red>255</red>
+        <green>127</green>
+        <blue>0</blue>
+      </color>
+      <trace_type>AREA</trace_type>
+      <linewidth>2</linewidth>
+      <line_style>SOLID</line_style>
+      <point_type>NONE</point_type>
+      <point_size>2</point_size>
+      <waveform_index>0</waveform_index>
+      <period>0.0</period>
+      <ring_size>5000</ring_size>
+      <request>OPTIMIZED</request>
+    </pv>
+    <pv>
+      <display_name>Received updates</display_name>
+      <visible>true</visible>
+      <name>proxy:clientEventRate</name>
+      <axis>1</axis>
+      <color>
+        <red>127</red>
+        <green>0</green>
+        <blue>255</blue>
       </color>
       <trace_type>AREA</trace_type>
       <linewidth>2</linewidth>

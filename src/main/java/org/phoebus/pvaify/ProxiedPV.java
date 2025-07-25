@@ -184,7 +184,12 @@ class ProxiedPV
     private ServerPV createServerPV(final String name, final VType value) throws Exception
     {
         server_data = DataUtil.create(name, value);
-        return proxy.server.createPV(name, server_data);
+        final ServerPV spv = proxy.server.createPV(name, server_data);
+        // TODO Set PV to read-only, then update as write access changes
+        // client_pv.isReadonly();
+        // client_pv.onAccessRightsEvent().subscribe();
+        // ... once PVAccess protocol supports read/write access information
+        return spv;
     }
 
     public void close()
