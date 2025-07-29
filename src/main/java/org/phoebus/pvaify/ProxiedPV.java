@@ -10,6 +10,7 @@ package org.phoebus.pvaify;
 import static org.phoebus.pvaify.Proxy.logger;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -20,6 +21,7 @@ import org.epics.vtype.VType;
 import org.phoebus.pv.PV;
 import org.phoebus.pv.PVPool;
 
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.disposables.Disposable;
 
 /** One PV that's proxied to PVA
@@ -70,9 +72,12 @@ class ProxiedPV
         {
             // Create the client PV
             client_pv = PVPool.getPV(name);
-            // Subscribe to updates
-            // On first update, when data type is known, create the server PV
-            client_sub = client_pv.onValueEvent().subscribe(this::handleClientUpdate);
+            // Subscribe to updates, potentially throttled
+            Flowable<VType> flow = client_pv.onValueEvent();
+            if (ProxyPreferences.client_throttle_ms > 0)
+                flow = flow.throttleLatest(ProxyPreferences.client_throttle_ms, TimeUnit.MILLISECONDS);
+            client_sub = flow.subscribe(this::handleClientUpdate);
+            // On first update, when data type is known, we create the server PV
         }
     }
 

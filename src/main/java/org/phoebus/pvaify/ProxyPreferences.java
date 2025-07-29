@@ -18,6 +18,8 @@ public class ProxyPreferences
     // See src/main/resources/pvaify_preferences.properties
     @Preference public static String prefix;
 
+    @Preference public static int client_throttle_ms;
+
     static
     {
         AnnotatedPreferences.initialize(ProxyPreferences.class, "/pvaify_preferences.properties");

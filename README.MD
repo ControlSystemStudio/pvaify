@@ -74,7 +74,7 @@ Running
 -------
 
 ```
-./pvaify.sh
+./pvaify.sh -settings pvaify.ini
 ```
 
 TODO
@@ -89,8 +89,11 @@ TODO
 - [X] Clean ProxiedPVs which are disconnected on CA side and PVA client is gone as well
 - [X] Handle value updates for Double, Number (int/short/byte), String, Enum,
       Array of byte/short/int/float/double
+- [X] Optional throttling of updates received on client side
+- [ ] Favor scalar updates over array updates
 - [ ] Configure ports, use non-standard ports to avoid loops
 - [ ] Update monitored value for more data types, including display info etc.
-- [ ] Throttling; Favor scalar updates over array updates
+- [ ] List of blocked client hosts
+- [ ] List of blocked PV names
 - [ ] Indicate read-only state (once PVA provides that info)
 - [ ] Controlled write access
