@@ -33,6 +33,9 @@ class Proxy
     /** Proxy runs until this counts to zero */
     private final CountDownLatch done = new CountDownLatch(1);
 
+    /** Cache for value updates from client side */
+    final ClientUpdateCache client_update_cache;
+
     /** PVA server side: Detects searches, provides PVA PVs */
     final PVAServer server;
 
@@ -53,6 +56,7 @@ class Proxy
 
     public Proxy(final String prefix) throws Exception
     {
+        client_update_cache = new ClientUpdateCache();
         server = new PVAServer(this::handleSearchRequest);
         info = new ProxyInfo(prefix , server);
     }
@@ -119,8 +123,12 @@ class Proxy
 
     public void mainLoop() throws InterruptedException
     {
-        while (! done.await(1, TimeUnit.SECONDS))
+        long last_ms = System.currentTimeMillis();
+        while (! done.await(ProxyPreferences.main_loop_ms, TimeUnit.MILLISECONDS))
         {
+            // Process client side updates
+            client_update_cache.process();
+
             int total = 0, connected = 0;
             for (ProxiedPV pv : pvs.values())
             {
@@ -144,10 +152,19 @@ class Proxy
                 }
             }
 
-            info.update(total, connected, total - connected,
-                        search_counter.getAndSet(0),
-                        client_update_counter.getAndSet(0),
-                        server_update_counter.getAndSet(0));
+            // Publish stats
+            long ms = System.currentTimeMillis();
+            double sec = ms == last_ms
+                       ? 1.0
+                       : (ms - last_ms) / 1000.0;
+            if (sec >= 1.0)
+            {
+                info.update(total, connected,
+                            search_counter.getAndSet(0) / sec,
+                            client_update_counter.getAndSet(0) / sec,
+                            server_update_counter.getAndSet(0) / sec);
+                last_ms = ms;
+            }
         }
     }
 

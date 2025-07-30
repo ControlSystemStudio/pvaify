@@ -20,6 +20,8 @@ public class ProxyPreferences
 
     @Preference public static int client_throttle_ms;
 
+    @Preference public static int main_loop_ms;
+
     static
     {
         AnnotatedPreferences.initialize(ProxyPreferences.class, "/pvaify_preferences.properties");

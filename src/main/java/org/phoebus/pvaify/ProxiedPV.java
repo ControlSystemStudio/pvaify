@@ -76,7 +76,7 @@ class ProxiedPV
             Flowable<VType> flow = client_pv.onValueEvent();
             if (ProxyPreferences.client_throttle_ms > 0)
                 flow = flow.throttleLatest(ProxyPreferences.client_throttle_ms, TimeUnit.MILLISECONDS);
-            client_sub = flow.subscribe(this::handleClientUpdate);
+            client_sub = flow.subscribe(this::onClientUpdate);
             // On first update, when data type is known, we create the server PV
         }
     }
@@ -112,11 +112,22 @@ class ProxiedPV
         return save_pv != null  &&  save_pv.isSubscribed();
     }
 
-    /** Handle a client PV update
-     *  Create PVA PV on first update, then keep updating its value
+    /** Called when receiving value update from client
      *  @param value Value received on client side
      */
-    private void handleClientUpdate(final VType value)
+    private void onClientUpdate(final VType value)
+    {
+        proxy.client_update_counter.incrementAndGet();
+        proxy.client_update_cache.add(this, value);
+    }
+
+    /** Send value out on server side
+     *
+     *  Called via ClientUpdateCache.
+     *  Create PVA PV on first update, then keep updating its value
+     *  @param value Value received on client side that should be sent out on server side
+     */
+    void updateServerSide(final VType value)
     {
         logger.log(Level.FINER, () -> "Client: " + name + " = " + DataUtil.shorten(value, 80) + " [" + state.get() + "]");
         if (state.get() == ProxiedPVState.State.Disposed)
@@ -124,8 +135,6 @@ class ProxiedPV
             logger.log(Level.FINER, () -> "Client: " + name + " update ignored, proxy has been disposed");
             return;
         }
-
-        proxy.client_update_counter.incrementAndGet();
 
         // When core-pv-ca connects to a large array, it will disconnect and then
         // re-connect at a lower priority. As a result, we see an initial 'disconnected' value
@@ -220,9 +229,28 @@ class ProxiedPV
         logger.log(Level.FINE, () -> "<<-------- Disposed " + this);
     }
 
+    // Hash and compare by name
+
+    @Override
+    public int hashCode()
+    {
+        return name.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        // Shortcut
+        if (obj == this)
+            return true;
+        if (obj instanceof ProxiedPV pv)
+            return pv.getName().equals(getName());
+        return false;
+    }
+
     @Override
     public String toString()
     {
-        return "ProxyPV '" + name + "' [" + state.get() + "]";
+        return "ProxyPV '" + getName() + "' [" + state.get() + "]";
     }
 }

@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.epics.pva.data.PVADouble;
 import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAString;
 import org.epics.pva.data.PVAStructure;
@@ -41,7 +42,8 @@ class ProxyInfo
                          PVAScalar.SCALAR_STRUCT_NAME_STRING,
                          new PVAInt("value", 0),
                          new PVAStructure("display", "display_t",
-                                 new PVAString("units", "PVs")),
+                                 new PVAString("units", "PVs"),
+                                 new PVAInt("precision", 0)),
                          stamp);
         pvtotal_pv = server.createPV(pvtotal_data.getName(), pvtotal_data);
 
@@ -49,7 +51,8 @@ class ProxyInfo
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
                 new PVAInt("value", 0),
                 new PVAStructure("display", "display_t",
-                        new PVAString("units", "PVs")),
+                        new PVAString("units", "PVs"),
+                        new PVAInt("precision", 0)),
                 stamp);
         connected_pv = server.createPV(connected_data.getName(), connected_data);
 
@@ -57,13 +60,14 @@ class ProxyInfo
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
                 new PVAInt("value", 0),
                 new PVAStructure("display", "display_t",
-                        new PVAString("units", "PVs")),
+                        new PVAString("units", "PVs"),
+                        new PVAInt("precision", 0)),
                 stamp);
         unconnected_pv = server.createPV(unconnected_data.getName(), unconnected_data);
 
         search_data = new PVAStructure(prefix + "existTestRate",
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
-                new PVAInt("value", 0),
+                new PVADouble("value", 0),
                 new PVAStructure("display", "display_t",
                         new PVAString("units", "Hz"),
                         new PVAInt("precision", 1)),
@@ -72,7 +76,7 @@ class ProxyInfo
 
         client_rate_data = new PVAStructure(prefix + "clientEventRate",
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
-                new PVAInt("value", 0),
+                new PVADouble("value", 0),
                 new PVAStructure("display", "display_t",
                         new PVAString("units", "Hz"),
                         new PVAInt("precision", 1)),
@@ -81,7 +85,7 @@ class ProxyInfo
 
         server_rate_data = new PVAStructure(prefix + "serverPostRate",
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
-                new PVAInt("value", 0),
+                new PVADouble("value", 0),
                 new PVAStructure("display", "display_t",
                         new PVAString("units", "Hz"),
                         new PVAInt("precision", 1)),
@@ -108,58 +112,58 @@ class ProxyInfo
 
     /** @param total Number of proxied channels
      *  @param connected .. with data, i.e., connected on the client side
-     *  @param unconnected .. without data, not connected on client side
      *  @param search_rate Received PV name searches
      *  @param client_rate Received subscription updates from client side
      *  @param server_rate Updates sent to server side
      */
-    public void update(final int total, final int connected, final int unconnected,
-                       final int search_rate, final int client_rate, final int server_rate)
+    public void update(final int total, final int connected,
+                       final double search_rate, final double client_rate, final double server_rate)
     {
         try
         {
             // Update common time stamp
             stamp.set(Instant.now());
 
-            PVAInt value = pvtotal_data.get("value");
-            if (value.get() != total)
+            PVAInt ival = pvtotal_data.get("value");
+            if (ival.get() != total)
             {
-                value.set(total);
+                ival.set(total);
                 pvtotal_pv.update(pvtotal_data);
             }
 
-            value = connected_data.get("value");
-            if (value.get() != connected)
+            ival = connected_data.get("value");
+            if (ival.get() != connected)
             {
-                value.set(connected);
+                ival.set(connected);
                 connected_pv.update(connected_data);
             }
 
-            value = unconnected_data.get("value");
-            if (value.get() != unconnected)
+            ival = unconnected_data.get("value");
+            final int unconnected = total - connected;
+            if (ival.get() != unconnected)
             {
-                value.set(unconnected);
+                ival.set(unconnected);
                 unconnected_pv.update(unconnected_data);
             }
 
-            value = search_data.get("value");
-            if (value.get() != search_rate)
+            PVADouble dval = search_data.get("value");
+            if (dval.get() != search_rate)
             {
-                value.set(search_rate);
+                dval.set(search_rate);
                 search_pv.update(search_data);
             }
 
-            value = client_rate_data.get("value");
-            if (value.get() != client_rate)
+            dval = client_rate_data.get("value");
+            if (dval.get() != client_rate)
             {
-                value.set(client_rate);
+                dval.set(client_rate);
                 client_rate_pv.update(client_rate_data);
             }
 
-            value = server_rate_data.get("value");
-            if (value.get() != server_rate)
+            dval = server_rate_data.get("value");
+            if (dval.get() != server_rate)
             {
-                value.set(server_rate);
+                dval.set(server_rate);
                 server_rate_pv.update(server_rate_data);
             }
         }
