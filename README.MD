@@ -73,9 +73,31 @@ mvn -DskipTests=true clean install
 Running
 -------
 
+PVA-i-fy:
+
 ```
+# Check example `pvaify.ini` for CA client settings
+
+# Optionally enable secure PVA by using server certificate
+export EPICS_PVAS_TLS_KEYCHAIN=~/.config/pva/1.3/server.p12
+
 ./pvaify.sh -settings pvaify.ini
 ```
+
+Clients:
+
+```
+# Optionally enable secure PVA by using server certificate
+export EPICS_PVA_TLS_KEYCHAIN=~/.config/pva/1.3/client.p12
+
+export EPICS_PVA_AUTO_ADDR_LIST=NO
+
+export EPICS_PVA_ADDR_LIST="IP-OF-PVA-i-fy-host"
+
+pvaclient monitor SomePVName
+phoebus.sh
+```
+
 
 TODO
 ----
@@ -86,10 +108,12 @@ TODO
 - [x] Dispose PVs that no longer have a client (on next update from client side)
 - [x] pom.xml
 - [X] Basic status PVs
+- [X] `proxy:listClients` RPC PV
 - [X] Clean ProxiedPVs which are disconnected on CA side and PVA client is gone as well
 - [X] Handle value updates for Double, Number (int/short/byte), String, Enum,
       Array of byte/short/int/float/double
 - [X] Optional throttling of updates received on client side
+- [X] Example for secure PVA client to proxy's server side
 - [ ] Favor scalar updates over array updates
 - [ ] Configure ports, use non-standard ports to avoid loops
 - [ ] Update monitored value for more data types, including display info etc.
