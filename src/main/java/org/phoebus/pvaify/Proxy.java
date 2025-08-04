@@ -86,7 +86,8 @@ class Proxy
         }
 
         // Info PVs are already handled by `server`, no need to proxy
-        if (! info.isInfoPV(name))
+        // (During startup, info can be null because we're just constructing it)
+        if (info != null  &&  !info.isInfoPV(name))
         {
             // Create proxy PV unless it already exists
             final ProxiedPV pv = pvs.computeIfAbsent(name, pv_name -> new ProxiedPV(this, pv_name, reply_sender));
