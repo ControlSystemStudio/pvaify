@@ -10,7 +10,9 @@ package org.phoebus.pvaify;
 import static org.phoebus.pvaify.Proxy.logger;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -22,7 +24,6 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVAScalar;
 import org.epics.pva.data.nt.PVATable;
 import org.epics.pva.data.nt.PVATimeStamp;
-import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.PVAServer.ClientInfo;
 import org.epics.pva.server.ServerPV;
 
@@ -31,21 +32,45 @@ import org.epics.pva.server.ServerPV;
  */
 class ProxyInfo
 {
-    private final PVAServer server;
+    private final Proxy proxy;
     private final PVATimeStamp stamp = new PVATimeStamp();
     private final ServerPV pvtotal_pv, connected_pv, unconnected_pv,
                            search_pv, client_rate_pv, server_rate_pv,
-                           list_clients_pv;
+                           clients_table_pv,
+                           list_disconnected_pv;
     private final PVAStructure pvtotal_data, connected_data, unconnected_data, search_data, client_rate_data, server_rate_data;
     private final Set<String> info_pv_names;
 
-    /** @param prefix Status PV prefix
-     *  @param server {@link PVAServer}
+
+    /** Compare {@link ClientInfo} by address */
+    private static Comparator<ClientInfo> sort_by_address = (a, b) ->
+        a.address().getAddress().getHostAddress().compareTo(b.address().getAddress().getHostAddress());
+
+    /** Compare {@link ClientInfo} by port */
+    private static Comparator<ClientInfo> sort_by_port = (a, b) ->
+        Integer.compare(a.address().getPort(), b.address().getPort());
+
+    /** Client table address column */
+    private final PVAStringArray client_table_addr = new PVAStringArray("addr");
+
+    /** Client table auth column */
+    private final PVAStringArray client_table_auth = new PVAStringArray("auth");
+
+    /** Client table */
+    private final PVAStructure client_table = new PVAStructure("clients", PVATable.STRUCT_NAME,
+            new PVAStringArray(PVATable.LABELS_NAME, "Address", "Authentication"),
+            new PVAStructure(PVATable.VALUE_NAME, "",
+                    client_table_addr,
+                    client_table_auth));
+
+
+    /** @param prefix Status/Command PV prefix
+     *  @param proxy {@link Proxy}
      *  @throws Exception on error
      */
-    public ProxyInfo(final String prefix, final PVAServer server) throws Exception
+    public ProxyInfo(final String prefix, final Proxy proxy) throws Exception
     {
-        this.server = server;
+        this.proxy = proxy;
         pvtotal_data = new PVAStructure(prefix + "pvtotal",
                          PVAScalar.SCALAR_STRUCT_NAME_STRING,
                          new PVAInt("value", 0),
@@ -53,7 +78,7 @@ class ProxyInfo
                                  new PVAString("units", "PVs"),
                                  new PVAInt("precision", 0)),
                          stamp);
-        pvtotal_pv = server.createPV(pvtotal_data.getName(), pvtotal_data);
+        pvtotal_pv = proxy.server.createPV(pvtotal_data.getName(), pvtotal_data);
 
         connected_data = new PVAStructure(prefix + "connected",
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
@@ -62,7 +87,7 @@ class ProxyInfo
                         new PVAString("units", "PVs"),
                         new PVAInt("precision", 0)),
                 stamp);
-        connected_pv = server.createPV(connected_data.getName(), connected_data);
+        connected_pv = proxy.server.createPV(connected_data.getName(), connected_data);
 
         unconnected_data = new PVAStructure(prefix + "unconnected",
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
@@ -71,7 +96,7 @@ class ProxyInfo
                         new PVAString("units", "PVs"),
                         new PVAInt("precision", 0)),
                 stamp);
-        unconnected_pv = server.createPV(unconnected_data.getName(), unconnected_data);
+        unconnected_pv = proxy.server.createPV(unconnected_data.getName(), unconnected_data);
 
         search_data = new PVAStructure(prefix + "existTestRate",
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
@@ -80,7 +105,7 @@ class ProxyInfo
                         new PVAString("units", "Hz"),
                         new PVAInt("precision", 1)),
                 stamp);
-        search_pv = server.createPV(search_data.getName(), search_data);
+        search_pv = proxy.server.createPV(search_data.getName(), search_data);
 
         client_rate_data = new PVAStructure(prefix + "clientEventRate",
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
@@ -89,7 +114,7 @@ class ProxyInfo
                         new PVAString("units", "Hz"),
                         new PVAInt("precision", 1)),
                 stamp);
-        client_rate_pv = server.createPV(client_rate_data.getName(), client_rate_data);
+        client_rate_pv = proxy.server.createPV(client_rate_data.getName(), client_rate_data);
 
         server_rate_data = new PVAStructure(prefix + "serverPostRate",
                 PVAScalar.SCALAR_STRUCT_NAME_STRING,
@@ -98,9 +123,11 @@ class ProxyInfo
                         new PVAString("units", "Hz"),
                         new PVAInt("precision", 1)),
                 stamp);
-        server_rate_pv = server.createPV(server_rate_data.getName(), server_rate_data);
+        server_rate_pv = proxy.server.createPV(server_rate_data.getName(), server_rate_data);
 
-        list_clients_pv = server.createPV(prefix + "listClients", this::listClients);
+        clients_table_pv = proxy.server.createPV(prefix + "clients", client_table);
+
+        list_disconnected_pv = proxy.server.createPV(prefix + "listDisconnected", this::listDisconnected);
 
         info_pv_names = Set.of(pvtotal_pv.getName(),
                                connected_pv.getName(),
@@ -108,7 +135,8 @@ class ProxyInfo
                                search_pv.getName(),
                                client_rate_pv.getName(),
                                server_rate_pv.getName(),
-                               list_clients_pv.getName());
+                               clients_table_pv.getName(),
+                               list_disconnected_pv.getName());
 
         logger.log(Level.CONFIG, "Info PVs: " + info_pv_names);
     }
@@ -177,6 +205,8 @@ class ProxyInfo
                 dval.set(server_rate);
                 server_rate_pv.update(server_rate_data);
             }
+
+            clients_table_pv.update(updateClientTable());
         }
         catch (Exception ex)
         {
@@ -184,28 +214,35 @@ class ProxyInfo
         }
     }
 
-    /** List info about clients to this proxy
-     *  @param parameters Optional parameters (ignored)
-     *  @return List of clients
-     *  @throws Exception on error
-     */
-    private PVAStructure listClients(final PVAStructure parameters) throws Exception
+    private PVAStructure updateClientTable()
     {
-        final Collection<ClientInfo> clients = server.getClientInfos();
-        final int N = clients.size();
+        final Collection<ClientInfo> clients = proxy.server.getClientInfos();
+        final ArrayList<ClientInfo> sorted = new ArrayList<>(clients);
+        sorted.sort(sort_by_address.thenComparing(sort_by_port));
+        final int N = sorted.size();
         final String[] addr = new String[N], auth = new String[N];
         int i = 0;
-        for (ClientInfo client : clients)
+        for (ClientInfo client : sorted)
         {
             addr[i] = client.address().getAddress().getHostAddress() + ":" + client.address().getPort();
             auth[i] = client.authentication().toString();
             ++i;
         }
+        client_table_addr.set(addr);
+        client_table_auth.set(auth);
+        return client_table;
+    }
 
-        return new PVAStructure("clients", PVATable.STRUCT_NAME,
-                new PVAStringArray(PVATable.LABELS_NAME, "Address", "Authentication"),
+    /** List disconnected PVs
+     *  @param parameters Optional parameters (ignored)
+     *  @return List of disconnected PVs
+     *  @throws Exception on error
+     */
+    private PVAStructure listDisconnected(final PVAStructure parameters) throws Exception
+    {
+        return new PVAStructure("disconnected", PVATable.STRUCT_NAME,
+                new PVAStringArray(PVATable.LABELS_NAME, "PV"),
                 new PVAStructure(PVATable.VALUE_NAME, "",
-                                 new PVAStringArray("addr", addr),
-                                 new PVAStringArray("auth", auth)));
+                        new PVAStringArray("disconnected", proxy.getDisconnectedPVs())));
     }
 }

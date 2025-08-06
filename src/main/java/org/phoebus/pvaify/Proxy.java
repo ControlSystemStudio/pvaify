@@ -58,7 +58,7 @@ class Proxy
     {
         client_update_cache = new ClientUpdateCache();
         server = new PVAServer(this::handleSearchRequest);
-        info = new ProxyInfo(prefix , server);
+        info = new ProxyInfo(prefix, this);
     }
 
     /** Server invokes this for every received name search.
@@ -120,6 +120,16 @@ class Proxy
         if (! pvs.remove(pv.getName(), pv))
             logger.log(Level.WARNING, "Tried to forget unknown PV " + pv.getName(),
                        new Exception("Stack trace"));
+    }
+
+    /** @return List of disconnected PV names */
+    String[] getDisconnectedPVs()
+    {
+        return pvs.values()
+                  .stream()
+                  .filter(pv-> !pv.isConnected())
+                  .map(ProxiedPV::getName)
+                  .toArray(n -> new String[n]);
     }
 
     public void mainLoop() throws InterruptedException
