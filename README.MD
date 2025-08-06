@@ -98,6 +98,27 @@ pvaclient monitor SomePVName
 phoebus.sh
 ```
 
+Proxy Status PVs
+----------------
+
+The proxy provides the following status PVs, where
+`$(P)` is the prefix provided via the preference setting
+
+```
+org.phoebus.pvaify/prefix=proxy:
+```
+
+| Proxy Status PV        | Description                  |
+| ---------------------- | ---------------------------- |
+| `$(P):pvtotal`          | Total number of proxied PVs  |
+| `$(P):connected`        | Number of PVs with connection on client side to CA server/IOC |
+| `$(P):unconnected`      | Number of PVs with no CA client connection |
+| `$(P):existTestRate`    | Rate of search requests received on PVA server side |
+| `$(P):clientEventRate`  | Rate of value updates received on CA client side |
+| `$(P):serverPostRate`   | Rate of value updates emitted on PVA server side |
+| `$(P):clients`         | Table of PVA clients connected to this proxy |
+| `$(P):listDisconnected` | RPC PV that returns list of disconnected channels |
+
 
 TODO
 ----

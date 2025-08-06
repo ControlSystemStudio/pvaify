@@ -206,7 +206,8 @@ class ProxyInfo
                 server_rate_pv.update(server_rate_data);
             }
 
-            clients_table_pv.update(updateClientTable());
+            if (clients_table_pv.isSubscribed())
+                clients_table_pv.update(updateClientTable());
         }
         catch (Exception ex)
         {
