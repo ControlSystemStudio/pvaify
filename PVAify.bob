@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>PVA-i-fy</name>
+  <macros>
+    <P>proxy:</P>
+  </macros>
+  <width>560</width>
+  <height>870</height>
+  <widget type="label" version="2.0.0">
+    <name>Label</name>
+    <class>TITLE</class>
+    <text>PVA-i-fy</text>
+    <x use_class="true">0</x>
+    <y use_class="true">0</y>
+    <width>550</width>
+    <height>31</height>
+    <font use_class="true">
+      <font name="Header 1" family="Liberation Sans" style="BOLD" size="22.0">
+      </font>
+    </font>
+    <foreground_color use_class="true">
+      <color name="Text" red="0" green="0" blue="0">
+      </color>
+    </foreground_color>
+    <transparent use_class="true">true</transparent>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_1</name>
+    <text>PV Count:</text>
+    <y>31</y>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_1</name>
+    <pv_name>$(P)pvtotal</pv_name>
+    <x>100</x>
+    <y>31</y>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_2</name>
+    <text>Connected:</text>
+    <y>61</y>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_2</name>
+    <pv_name>$(P)connected</pv_name>
+    <x>100</x>
+    <y>61</y>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_3</name>
+    <text>Disconnected:</text>
+    <y>91</y>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_3</name>
+    <pv_name>$(P)unconnected</pv_name>
+    <x>100</x>
+    <y>91</y>
+  </widget>
+  <widget type="table" version="2.0.0">
+    <name>Table</name>
+    <pv_name>$(P)clients</pv_name>
+    <y>121</y>
+    <width>560</width>
+    <height>310</height>
+    <columns>
+      <column>
+        <name>Address</name>
+        <width>250</width>
+        <editable>false</editable>
+      </column>
+      <column>
+        <name>Authentication</name>
+        <width>300</width>
+        <editable>false</editable>
+      </column>
+    </columns>
+    <editable>false</editable>
+  </widget>
+  <widget type="databrowser" version="2.0.0">
+    <name>Data Browser</name>
+    <file>PVAify.plt</file>
+    <x>10</x>
+    <y>440</y>
+    <width>550</width>
+    <height>430</height>
+  </widget>
+</display>

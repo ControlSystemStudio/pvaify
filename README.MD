@@ -135,8 +135,11 @@ TODO
       Array of byte/short/int/float/double
 - [X] Optional throttling of updates received on client side
 - [X] Example for secure PVA client to proxy's server side
+- [X] Example for settings ports, use non-standard ports to avoid loops
+- [X] Use UDP search, then secure TLS connection
+- [X] Use `EPICS_PVA_NAME_SERVERS` to search and then read via TCP, no UDP
+- [ ] Use `EPICS_PVA_NAME_SERVERS` to search and then read via TLS, no UDP
 - [ ] Favor scalar updates over array updates
-- [ ] Configure ports, use non-standard ports to avoid loops
 - [ ] Update monitored value for more data types, including display info etc.
 - [ ] List of blocked client hosts
 - [ ] List of blocked PV names

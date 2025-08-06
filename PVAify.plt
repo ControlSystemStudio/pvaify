@@ -64,7 +64,7 @@
     <pv>
       <display_name>Total</display_name>
       <visible>true</visible>
-      <name>pva://proxy:pvtotal</name>
+      <name>$(P)pvtotal</name>
       <axis>0</axis>
       <color>
         <red>0</red>
@@ -84,7 +84,7 @@
     <pv>
       <display_name>Connected</display_name>
       <visible>true</visible>
-      <name>pva://proxy:connected</name>
+      <name>$(P)connected</name>
       <axis>0</axis>
       <color>
         <red>0</red>
@@ -104,7 +104,7 @@
     <pv>
       <display_name>Disconnected</display_name>
       <visible>true</visible>
-      <name>pva://proxy:unconnected</name>
+      <name>$(P)unconnected</name>
       <axis>0</axis>
       <color>
         <red>255</red>
@@ -124,7 +124,7 @@
     <pv>
       <display_name>Searches</display_name>
       <visible>true</visible>
-      <name>proxy:existTestRate</name>
+      <name>$(P)existTestRate</name>
       <axis>1</axis>
       <color>
         <red>255</red>
@@ -144,7 +144,7 @@
     <pv>
       <display_name>Received updates</display_name>
       <visible>true</visible>
-      <name>proxy:clientEventRate</name>
+      <name>$(P)clientEventRate</name>
       <axis>1</axis>
       <color>
         <red>127</red>
