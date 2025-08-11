@@ -33,6 +33,9 @@ class Proxy
     /** Proxy runs until this counts to zero */
     private final CountDownLatch done = new CountDownLatch(1);
 
+    /** Filter for PV names and client hosts */
+    final private PVListFile pvlist;
+
     /** Cache for value updates from client side */
     final ClientUpdateCache client_update_cache;
 
@@ -54,8 +57,9 @@ class Proxy
     /** Counter for updates sent to server side */
     final AtomicInteger server_update_counter = new AtomicInteger();
 
-    public Proxy(final String prefix) throws Exception
+    public Proxy(final String prefix, final PVListFile pvlist) throws Exception
     {
+        this.pvlist = pvlist;
         client_update_cache = new ClientUpdateCache();
         server = new PVAServer(this::handleSearchRequest);
         info = new ProxyInfo(prefix, this);
@@ -77,6 +81,10 @@ class Proxy
         logger.log(Level.FINE, () -> client + " searches for " + name + " [CID " + cid + ", seq " + seq + "]");
 
         search_counter.incrementAndGet();
+
+        // Is PV filtered out? Then return true to pretend we handled it (by ignoring it)
+        if (pvlist != null  &&  !pvlist.mayAccess(name, client.getAddress()))
+            return true;
 
         // TODO Make this one of the status/control PVs
         if (name.equals("QUIT"))

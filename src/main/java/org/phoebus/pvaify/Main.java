@@ -23,8 +23,9 @@ public class Main
     {
         System.out.println("Command-line arguments:");
         System.out.println();
-        System.out.println("-help                   - This text");
-        System.out.println("-settings settings.ini  - Import settings from file");
+        System.out.println("-help                    - This text");
+        System.out.println("-settings settings.ini   - Import settings from file");
+        System.out.println("-pvlist settings.pvlist  - PV name filters");
         System.out.println();
     }
 
@@ -48,6 +49,8 @@ public class Main
         Preferences prefs = Preferences.userNodeForPackage(org.phoebus.pv.ca.JCA_PVFactory.class);
         prefs.putBoolean("dbe_property_supported", true);
 
+        PVListFile pvlist = null;
+
         for (int i=0; i<args.length; ++i)
         {
             if (args[i].startsWith("-h"))
@@ -66,9 +69,20 @@ public class Main
                 PropertyPreferenceLoader.load(new FileInputStream(args[i+1]));
                 ++i;
             }
+            if (args[i].startsWith("-pvl"))
+            {
+                if (i+1 >= args.length)
+                {
+                    help();
+                    System.err.println("Missing -pvlist filename");
+                    return;
+                }
+                pvlist = new PVListFile(args[i+1]);
+                ++i;
+            }
         }
 
-        final Proxy proxy = new Proxy(ProxyPreferences.prefix);
+        final Proxy proxy = new Proxy(ProxyPreferences.prefix, pvlist);
         proxy.mainLoop();
         proxy.close();
     }

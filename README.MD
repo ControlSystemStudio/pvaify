@@ -141,7 +141,6 @@ TODO
 - [ ] Use `EPICS_PVA_NAME_SERVERS` to search and then read via TLS, no UDP
 - [ ] Favor scalar updates over array updates
 - [ ] Update monitored value for more data types, including display info etc.
-- [ ] List of blocked client hosts
-- [ ] List of blocked PV names
+- [X] List of blocked PV names and/or client hosts
 - [ ] Indicate read-only state (once PVA provides that info)
 - [ ] Controlled write access

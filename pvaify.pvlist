@@ -1,0 +1,35 @@
+# PVA-i-fy 'pvlist' example
+#
+# Controls what PVs the proxy will handle
+#
+# Syntax is similar to CA or p4p Gateway:
+#
+#    {regular expression for PV name}     DENY
+#    {regular expression for PV name}     DENY FROM  {IP}
+#    {regular expression for PV name}     ALLOW
+#
+# https://epics-base.github.io/p4p/gw.html#pvlist-file
+#
+# Compared to the CA gateway, the mode is always
+# EVALUATION ORDER ALLOW, DENY
+#
+# This means that DENY has preference over ALLOW,
+# which actually results in all DENY statements being checked first(!),
+# and matching PVs are blocked.
+# To make this behavior more obvious, it is suggested
+# to start with the DENY rules
+
+# Ignore searches for PVs named 'Ignore:...' 
+Ignore:.*   DENY
+
+BL10:.*     DENY
+
+# Ignore searches for any PVs from specific host
+.*          DENY FROM 11.12.13.14
+
+# Then list ALLOW statements, where matching PVs are accepted.
+
+# If a PV does not match at all, it is DENYed,
+# so add this if there are no specific ALLOW patters
+.*          ALLOW
+
