@@ -142,5 +142,5 @@ TODO
 - [ ] Favor scalar updates over array updates
 - [ ] Update monitored value for more data types, including display info etc.
 - [X] List of blocked PV names and/or client hosts
-- [ ] Indicate read-only state (once PVA provides that info)
+- [X] Indicate read-only state (once PVA provides that info)
 - [ ] Controlled write access
