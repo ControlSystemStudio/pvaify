@@ -137,8 +137,11 @@ TODO
 - [X] Example for secure PVA client to proxy's server side
 - [X] Example for settings ports, use non-standard ports to avoid loops
 - [X] Use UDP search, then secure TLS connection
-- [X] Use `EPICS_PVA_NAME_SERVERS` to search and then read via TCP, no UDP
-- [ ] Use `EPICS_PVA_NAME_SERVERS` to search and then read via TLS, no UDP
+- [X] Use `EPICS_PVA_NAME_SERVERS=IP.OF.HO.ST` to search and then read via TCP
+      by setting `EPICS_PVA_AUTO_ADDR_LIST=NO`
+- [X] Use `EPICS_PVA_NAME_SERVERS='pvas://IP.OF.HO.ST'` to search and then read via TLS
+      by setting `EPICS_PVA_AUTO_ADDR_LIST=NO` and
+      `EPICS_PVA_TLS_KEYCHAIN=$HOME/.config/pva/1.3/client.p12`
 - [ ] Favor scalar updates over array updates
 - [ ] Update monitored value for more data types, including display info etc.
 - [X] List of blocked PV names and/or client hosts
