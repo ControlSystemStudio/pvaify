@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Is there a JAR?
-JAR=`echo target/pvaify-*.jar`
-
 # Configure PVA server side
 # See PVASettings.java for details
 
@@ -18,9 +15,14 @@ export EPICS_PVA_SERVER_PORT=5075
 # (will use random one when not available)
 export EPICS_PVAS_TLS_PORT=5076
 
-# Enable Secure PVA (leave empty to disable)
+# Enable Secure PVA by providing a server certificate.
+# Clients will need a suitable client certificate.
+# Leave empty to disable support for security.
 export EPICS_PVAS_TLS_KEYCHAIN=~/.config/pva/1.3/server.p12
 
+
+# Is there a JAR?
+JAR=`echo target/pvaify-*.jar`
 
 if [ -r $JAR ]
 then
