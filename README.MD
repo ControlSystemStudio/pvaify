@@ -43,6 +43,15 @@ but by introducing TLS now, outside clients are prepared to eventually adding
 authenticated and authorized write access.
 
 
+PVA-i-fy Binary
+---------------
+
+Fetch https://controlssoftware.sns.ornl.gov/css_phoebus/nightly/pvaify.zip
+and unzip.
+
+To run, you need a recent JDK, for example from https://jdk.java.net/archive
+
+
 Building PVA-i-fy
 -----------------
 
