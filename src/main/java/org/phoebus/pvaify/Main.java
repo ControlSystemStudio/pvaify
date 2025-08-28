@@ -8,6 +8,7 @@
 package org.phoebus.pvaify;
 
 import java.io.FileInputStream;
+import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
@@ -78,6 +79,7 @@ public class Main
                     return;
                 }
                 pvlist = new PVListFile(args[i+1]);
+                Proxy.logger.log(Level.CONFIG, "PVList rules:\n" + pvlist);
                 ++i;
             }
         }

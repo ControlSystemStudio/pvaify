@@ -96,6 +96,6 @@ abstract public class PVListFileRule
     @Override
     public String toString()
     {
-        return pv_pattern.pattern() + "\t" + type.name();
+        return String.format("%-30s    %s", pv_pattern.pattern(), type.name());
     }
 }

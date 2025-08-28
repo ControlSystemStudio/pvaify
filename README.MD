@@ -17,8 +17,6 @@ detecting searches from PVA clients.
 It turns these into CA searches on the 'inside' network,
 then provides the data received from CA as PVA PVs.
 
-<img src="pvaify_detail.png" width=50%>
-
  1. PVA client searches for PV.
  2. The PVA server side of PVA-i-fy receives that search.
     PVA-i-fy does not reply to the search, yet,
@@ -27,15 +25,16 @@ then provides the data received from CA as PVA PVs.
  4. CA client PV connects to IOC, gets first sample.
  5. PVA-i-fy creates PVA server PV with that sample as initial value.
  6. PVA server replies to the search request.
-    Depending on timing, the client might also have issued another
-    search, and since the PVA server is now aware of that PV,
-    it will reply right away.
+    In the meantime, the client may have issued another search.
+    Since the PVA server is now aware of that PV, it will reply right away.
  7. PVA client sees the search reply, connects to PVA server, subscribes, gets initial value.
  8. As the CA client PV receives value updates,
     PVA-i-fy forwards them by updating the associated PVA server PV.
 
 Protected by a firewall, the inner control system network can continue to use CA
 during the potentially long update to EPICS 7 and PVA.
+
+<img src="pvaify_detail.png" width=50%>
 
 On the outside network, PVA is prepared for IPv6 as well as Transport Layer Security (TLS)
 to support today's network requirements.
@@ -47,40 +46,58 @@ authenticated and authorized write access.
 Building PVA-i-fy
 -----------------
 
+The proxy relies on the CA client library,
+the core PVA library and the phoebus PV pool.
+To use the latest PVA and PV pool
+sources, compile them locally: 
+
 ```
 git clone https://github.com/ControlSystemStudio/phoebus.git
 cd phoebus
 mvn -DskipTests=true clean install
 cd ..
+```
 
+Then build the proxy:
+
+```
 git clone  https://code.ornl.gov/ky9/pvaify.git
 cd pvaify
-mvn -DskipTests=true clean install
+mvn -DskipTests=true clean package 
 ```
+
+For distribution, zip the relevant components:
+
+```
+./zip.sh
+```
+
 
 Running PVA-i-fy
 ----------------
 
-Check example `pvaify.ini` and `pvaify.sh` for
+Check `demo/pvaify.ini` and `pvaify.sh` for
 settings related to CA client side of proxy,
 PVA server side of proxy, and overall proxy settings.
 
 ```
-./pvaify.sh -settings pvaify.ini
+./pvaify.sh -settings demo/pvaify.ini
 ```
+
 
 Configuring clients to use PVA-i-fy
 -----------------------------------
 
-For the commonly used UDP name lookup,
-configure an explicit address list that points to PVA-i-fy:
+Configure an explicit address list that points to PVA-i-fy:
 
 ```
 export EPICS_PVA_AUTO_ADDR_LIST=NO
 export EPICS_PVA_ADDR_LIST="IP-OF-PVA-i-fy-host"
 ```
 
-Alternatively, perform the search via TCP:
+The PVA ADDR LIST uses a UDP search, as is the case
+with the corresponding channel access address list.
+Alternatively, perform the PVA search via TCP:
 
 ```
 export EPICS_PVA_AUTO_ADDR_LIST=NO
@@ -88,10 +105,14 @@ export EPICS_PVA_ADDR_LIST=
 export EPICS_PVA_NAME_SERVERS="IP-OF-PVA-i-fy-host:5075"
 ```
 
-For secure PVA (TLS instead of plain TCP connection),
-add a client certificate:
+To stay with the UDP name search but then
+use secure PVA (TLS instead of plain TCP connection,
+see https://github.com/ControlSystemStudio/phoebus/blob/master/core/pva/TLS.md)
+for the data transfers, add a client certificate:
 
 ```
+export EPICS_PVA_AUTO_ADDR_LIST=NO
+export EPICS_PVA_ADDR_LIST="IP-OF-PVA-i-fy-host"
 export EPICS_PVA_TLS_KEYCHAIN=~/.config/pva/1.3/client.p12
 ```
 
@@ -100,9 +121,10 @@ the IP address needs to be prefixed with `pvas://` and point
 to the TLS port of the server, by default 5076:
 
 ```
+export EPICS_PVA_AUTO_ADDR_LIST=NO
+export EPICS_PVA_ADDR_LIST=
 export EPICS_PVA_NAME_SERVERS="pvas://IP-OF-PVA-i-fy-host:5076"
 ```
-
 
 Then run PVA clients as usual:
 
@@ -113,15 +135,16 @@ pvxmonitor SomePVName
 
 For CS-Studio, the optional `EPICS_PVA_TLS_KEYCHAIN` is set
 via the environment as shown above. The remaining parameters
-are passed via a preference file which also sets the default
-PV type to `pva`. See `css_pva.ini` for an example:
+are typically not passed via environment variables but a preference file
+which also sets the default PV type to `pva`. See `demo/css_pva.ini` for an example:
 
 ```
 # Optionally enable secure PVA
 export EPICS_PVA_TLS_KEYCHAIN=~/.config/pva/1.3/client.p12
 # Remaining settings are in css_pva.ini
-phoebus.sh -settings /path/to/css_pva.ini
+phoebus.sh -settings /path/to/pvaify/demo/css_pva.ini
 ```
+
 
 Proxy Status PVs
 ----------------
@@ -144,6 +167,18 @@ org.phoebus.pvaify/prefix=proxy:
 | `$(P):clients`          | Table of PVA clients connected to this proxy               |
 | `$(P):listDisconnected` | RPC PV that returns list of disconnected channels          |
 
+The `demo` folder contains an example display.
+
+
+Controlling which PVs are Proxied
+---------------------------------
+
+By default, the proxy will try to mirror any PV name.
+You may want to control which PVs a proxy handles.
+For example, you may want to run a designated proxy that only
+mirrors vacuum PVs, identified by PV names that start with "Vac:...".
+See `demo/pvaify.pvlist` for details. 
+
 
 Internals
 ---------
@@ -156,18 +191,14 @@ PVA, so `ca://` is configured as the default PV Pool prefix
 of the PVA-i-fy  client side.
 When the proxy receives a request for the PVA PV `XYZ`,
 it will map that to the CA PV `XYZ`.
-When the proxy receives a request for the PVA PV `sim://ramp`,
-it will recognize that as the simulated ramp PV and send its
-data to a PVA PV named `sim://ramp`.
-
 
 
 Implementation Progress
 -----------------------
 
-- [x] Very first proof of principle:
-      Create PV with initial value on first client access
-- [x] Update monitored value, time, alarm for 'double'
+- [x] Proof of principle:
+      Create PV with initial value on first client access,
+      update monitored value, time, alarm for 'double'
 - [x] Dispose PVs that no longer have a client
 - [x] pom.xml
 - [X] Basic status PVs
@@ -182,6 +213,8 @@ Implementation Progress
 - [X] Use `EPICS_PVA_NAME_SERVERS='pvas://IP.OF.HO.ST'` to search and then read via TLS
       by setting `EPICS_PVA_AUTO_ADDR_LIST=NO` and
       `EPICS_PVA_TLS_KEYCHAIN=$HOME/.config/pva/1.3/client.p12`
+- [ ] Unify config: All command line params as in CA gateway,
+      or all in YAML file as in P4P gateway?
 - [ ] Favor scalar updates over array updates
 - [ ] Update monitored value for more data types, including display info etc.
 - [X] `pvlist` file to block PV names and/or client hosts

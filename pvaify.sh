@@ -21,12 +21,16 @@ export EPICS_PVAS_TLS_PORT=5076
 export EPICS_PVAS_TLS_KEYCHAIN=~/.config/pva/1.3/server.p12
 
 
-# Is there a JAR?
-JAR=`echo target/pvaify-*.jar`
+# Check for distribution jar
+JAR=`echo pvaify-*.jar`
+if [ ! -r $JAR ]
+then
+    # Check for maven-built jar
+    JAR=`echo target/pvaify-*.jar`
+fi
 
 if [ -r $JAR ]
 then
-    # Use maven-built jar
     java -jar $JAR "$@" 
 else
     # Use IDE-provided classes and dependencies

@@ -1,8 +1,12 @@
 # PVA-i-fy 'pvlist' example
 #
-# Controls what PVs the proxy will handle
+# Run the proxy with added option
 #
-# Syntax is similar to CA or p4p Gateway:
+#   -pvlist /path/to/pvaify.pvlist
+#
+# to control which PVs the proxy will handle.
+#
+# Syntax is similar to the CA or p4p Gateway:
 #
 #    {regular expression for PV name}     DENY
 #    {regular expression for PV name}     DENY FROM  {IP}
@@ -13,23 +17,24 @@
 # Compared to the CA gateway, the mode is always
 # EVALUATION ORDER ALLOW, DENY
 #
-# This means that DENY has preference over ALLOW,
-# which actually results in all DENY statements being checked first(!),
-# and matching PVs are blocked.
-# To make this behavior more obvious, it is suggested
-# to start with the DENY rules
+# This means that DENY has preference over ALLOW.
+# DENY statements are checked first and matching PVs are blocked,
+# even if an ALLOW statement would follow.
 
 # Ignore searches for PVs named 'Ignore:...' 
 Ignore:.*   DENY
 
-BL10:.*     DENY
+# Ignore searches for PVs from a certain beam line
+# BL10:.*     DENY
 
 # Ignore searches for any PVs from specific host
 .*          DENY FROM 11.12.13.14
 
 # Then list ALLOW statements, where matching PVs are accepted.
 
-# If a PV does not match at all, it is DENYed,
+#SomePV     ALLOW
+#Vac:.*     ALLOW
+
+# If a PV does not match any ALLOW rule, it is DENYed,
 # so add this if there are no specific ALLOW patters
 .*          ALLOW
-
