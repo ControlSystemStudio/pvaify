@@ -24,9 +24,10 @@ public class Main
     {
         System.out.println("Command-line arguments:");
         System.out.println();
-        System.out.println("-help                    - This text");
-        System.out.println("-settings settings.ini   - Import settings from file");
-        System.out.println("-pvlist settings.pvlist  - PV name filters");
+        System.out.println("-help                       - This text");
+        System.out.println("-settings settings.ini      - Import settings from file");
+        System.out.println("-pvlist settings.pvlist     - PV name filters");
+        System.out.println("-logging logging.properties - Logging configuration");
         System.out.println();
     }
 
@@ -59,7 +60,7 @@ public class Main
                 help();
                 return;
             }
-            if (args[i].startsWith("-s"))
+            else if (args[i].startsWith("-s"))
             {
                 if (i+1 >= args.length)
                 {
@@ -70,7 +71,7 @@ public class Main
                 PropertyPreferenceLoader.load(new FileInputStream(args[i+1]));
                 ++i;
             }
-            if (args[i].startsWith("-pvl"))
+            else if (args[i].startsWith("-pvl"))
             {
                 if (i+1 >= args.length)
                 {
@@ -81,6 +82,24 @@ public class Main
                 pvlist = new PVListFile(args[i+1]);
                 Proxy.logger.log(Level.CONFIG, "PVList rules:\n" + pvlist);
                 ++i;
+            }
+            else if (args[i].startsWith("-log"))
+            {
+                if (i+1 >= args.length)
+                {
+                    help();
+                    System.err.println("Missing -logging file");
+                    return;
+                }
+                LogManager.getLogManager().updateConfiguration(new FileInputStream(args[i+1]), (k) -> ((o, n) -> n == null ? o : n));
+                ++i;
+            }
+            else
+            {
+                help();
+                System.err.println("Unknown parameter " + args[i]);
+                return;
+
             }
         }
 
