@@ -85,8 +85,7 @@ For distribution, zip the relevant components:
 Running PVA-i-fy
 ----------------
 
-Check `demo/pvaify.ini` and `pvaify.sh` for
-settings related to CA client side of proxy,
+Check `pvaify.sh` for settings related to CA client side of proxy,
 PVA server side of proxy, and overall proxy settings.
 
 ```
@@ -225,10 +224,7 @@ Implementation Progress
       `EPICS_PVA_TLS_KEYCHAIN=$HOME/.config/pva/1.3/client.p12`
 - [X] `pvlist` file to block PV names and/or client hosts
 - [X] Indicate read-only state (with PVA prototype that provides this info)
-- [ ] Unify config, which is currently a mix of command line, environment vars
-      and a settings file.
-      Use all command line params as in the CA gateway,
-      or put all settings into a settings file, or a YAML file as in the P4P gateway?
+- [X] Unify config into phoebus preferences (-settings my_settings.ini)
 - [ ] Favor scalar updates over array updates?
 - [ ] Update monitored value for more data types, including display info etc.
 - [ ] Is there a practical way to turn the CA waveforms and scalars for an areadetector
