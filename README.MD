@@ -133,6 +133,7 @@ to the TLS port of the server, by default 5076:
 export EPICS_PVA_AUTO_ADDR_LIST=NO
 export EPICS_PVA_ADDR_LIST=
 export EPICS_PVA_NAME_SERVERS="pvas://IP-OF-PVA-i-fy-host:5076"
+export EPICS_PVA_TLS_KEYCHAIN=~/.config/pva/1.3/client.p12
 ```
 
 Then run PVA clients as usual:
@@ -183,7 +184,7 @@ Controlling which PVs are Proxied
 ---------------------------------
 
 By default, the proxy will try to mirror any PV name.
-You may want to control which PVs a proxy handles.
+You may want to control which PVs a proxy handles and which it ignores.
 For example, you may want to run a designated proxy that only
 mirrors vacuum PVs, identified by PV names that start with "Vac:...".
 See `demo/pvaify.pvlist` for details. 
@@ -222,13 +223,18 @@ Implementation Progress
 - [X] Use `EPICS_PVA_NAME_SERVERS='pvas://IP.OF.HO.ST'` to search and then read via TLS
       by setting `EPICS_PVA_AUTO_ADDR_LIST=NO` and
       `EPICS_PVA_TLS_KEYCHAIN=$HOME/.config/pva/1.3/client.p12`
-- [ ] Unify config: All command line params as in CA gateway,
-      or all in YAML file as in P4P gateway?
-- [ ] Favor scalar updates over array updates
-- [ ] Update monitored value for more data types, including display info etc.
 - [X] `pvlist` file to block PV names and/or client hosts
 - [X] Indicate read-only state (with PVA prototype that provides this info)
+- [ ] Unify config, which is currently a mix of command line, environment vars
+      and a settings file.
+      Use all command line params as in the CA gateway,
+      or put all settings into a settings file, or a YAML file as in the P4P gateway?
+- [ ] Favor scalar updates over array updates?
+- [ ] Update monitored value for more data types, including display info etc.
+- [ ] Is there a practical way to turn the CA waveforms and scalars for an areadetector
+      image into a PVA image?
 - [ ] Controlled write access
 - [ ] As control system devices start to directly support PVA and a PVA gateway is added,
       how could PVA-i-fy coexist with a PVA gateway?
-      PVA-i-fy needs to ignore PVs avalable on PVA gateway and vice versa!
+      PVA-i-fy needs to ignore PVs available on PVA gateway and vice versa!
+      This can be accomplished via the `pvlist` file, but is there a more practical way?
