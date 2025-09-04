@@ -8,6 +8,7 @@
 package org.phoebus.pvaify;
 
 import java.io.FileInputStream;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -31,6 +32,30 @@ public class Main
         System.out.println();
     }
 
+    /** Concentrate all settings into phoebus preferences (-settings xxx.ini).
+     *
+     *  ProxyPreferences and core-pv-ca for client side already use phoebus preferences.
+     *  PVAccess server settings are handled by core-pv, using environment or java properties.
+     *  Populate them from preferences similar to what core-pv-pva does,
+     *  but don't require core-pv-pva to be included
+     */
+    private static void configPVAfromPreferences()
+    {
+        final Preferences pva_prefs = Preferences.userRoot().node("/org/phoebus/pv/pva");
+        for (var pref : List.of("EPICS_PVAS_BROADCAST_PORT",
+                                "EPICS_PVA_SERVER_PORT",
+                                "EPICS_PVAS_TLS_PORT",
+                                "EPICS_PVAS_INTF_ADDR_LIST",
+                                "EPICS_PVAS_TLS_KEYCHAIN",
+                                "EPICS_PVAS_TLS_OPTIONS"))
+        {   // If there is a /org/phoebus/pv/pva/epics_pva_abc setting, turn into EPICS_PVA_ABC property for core-pva
+            final String value = pva_prefs.get(pref.toLowerCase(), null);
+            if (value != null)
+                System.setProperty(pref, value);
+        }
+    }
+
+
     public static void main(String[] args) throws Exception
     {
         // http://patorjk.com/software/taag/#p=display&f=Epic&t=PVA-i-fy
@@ -44,15 +69,13 @@ public class Main
         System.out.println("|/          \\_/   |/     \\|    \\_______/    |/          \\_/   ");
         System.out.println();
 
-        // Load logging configuration
+        // Load default logging configuration
         LogManager.getLogManager().readConfiguration(Main.class.getResourceAsStream("/logging.properties"));
         Proxy.logger = Logger.getLogger(Main.class.getPackageName());
 
-        Preferences prefs = Preferences.userNodeForPackage(org.phoebus.pv.ca.JCA_PVFactory.class);
-        prefs.putBoolean("dbe_property_supported", true);
-
         PVListFile pvlist = null;
 
+        // Parse command line args
         for (int i=0; i<args.length; ++i)
         {
             if (args[i].startsWith("-h"))
@@ -102,6 +125,8 @@ public class Main
 
             }
         }
+
+        configPVAfromPreferences();
 
         final Proxy proxy = new Proxy(ProxyPreferences.prefix, pvlist);
         proxy.mainLoop();
