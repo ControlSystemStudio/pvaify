@@ -22,6 +22,8 @@ public class ProxyPreferences
 
     @Preference public static int main_loop_ms;
 
+    @Preference public static double unused_pv_purge_sec;
+
     static
     {
         AnnotatedPreferences.initialize(ProxyPreferences.class, "/pvaify_preferences.properties");

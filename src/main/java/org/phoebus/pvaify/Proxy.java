@@ -164,7 +164,7 @@ class Proxy
                 // (in case we don't get an earlier search reply out)
                 if (! (is_connected && pv.isSubscribed())
                     &&
-                    pv.getSecsInState() > 60.0)
+                    pv.getSecsInState() > ProxyPreferences.unused_pv_purge_sec)
                 {
                     logger.log(Level.FINER, () -> "Removing unused proxy " + pv);
                     pv.close();
