@@ -85,7 +85,7 @@ For distribution, zip the relevant components:
 Running PVA-i-fy
 ----------------
 
-Check `pvaify.sh` for settings related to CA client side of proxy,
+Check `pvaify.ini` for settings related to CA client side of proxy,
 PVA server side of proxy, and overall proxy settings.
 
 ```
@@ -95,6 +95,8 @@ PVA server side of proxy, and overall proxy settings.
 
 Configuring clients to use PVA-i-fy
 -----------------------------------
+
+Clients other than CS-Studio tend to use the following environment variables.
 
 Configure an explicit address list that points to PVA-i-fy:
 
@@ -113,9 +115,12 @@ export EPICS_PVA_ADDR_LIST=
 export EPICS_PVA_NAME_SERVERS="IP-OF-PVA-i-fy-host:5075"
 ```
 
+To use secure PV Access, refer to  
+https://github.com/ControlSystemStudio/phoebus/blob/master/core/pva/TLS.md
+to prepare the necessary certificate files.
+
 To stay with the UDP name search but then
-use secure PVA (TLS instead of plain TCP connection,
-see https://github.com/ControlSystemStudio/phoebus/blob/master/core/pva/TLS.md)
+use secure PVA (TLS) instead of plain TCP connection
 for the data transfers, add a client certificate:
 
 ```
