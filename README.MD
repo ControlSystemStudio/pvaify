@@ -70,7 +70,7 @@ cd ..
 Then build the proxy:
 
 ```
-git clone  https://code.ornl.gov/ky9/pvaify.git
+git clone https://github.com/ControlSystemStudio/pvaify.git
 cd pvaify
 mvn -DskipTests=true clean package 
 ```
