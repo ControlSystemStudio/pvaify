@@ -229,7 +229,9 @@ Implementation Progress
 - [ ] Update monitored value for more data types, including display info etc.
 - [ ] Is there a practical way to turn the CA waveforms and scalars for an areadetector
       image into a PVA image?
-- [ ] Controlled write access
+- [X] Basic global on/off write access
+- [ ] Dynamic write access that reflects if CA PV is writable
+- [ ] Write access rules for controlled write access
 - [ ] As control system devices start to directly support PVA and a PVA gateway is added,
       how could PVA-i-fy coexist with a PVA gateway?
       PVA-i-fy needs to ignore PVs available on PVA gateway and vice versa!

@@ -18,6 +18,8 @@ public class ProxyPreferences
     // See src/main/resources/pvaify_preferences.properties
     @Preference public static String prefix;
 
+    @Preference public static boolean readonly;
+
     @Preference public static int client_throttle_ms;
 
     @Preference public static int main_loop_ms;

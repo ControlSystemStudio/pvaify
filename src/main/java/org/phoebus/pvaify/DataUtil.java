@@ -13,10 +13,12 @@ import java.util.Objects;
 
 import org.epics.pva.data.PVAByteArray;
 import org.epics.pva.data.PVAData;
+import org.epics.pva.data.PVADouble;
 import org.epics.pva.data.PVADoubleArray;
 import org.epics.pva.data.PVAFloatArray;
 import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAIntArray;
+import org.epics.pva.data.PVANumber;
 import org.epics.pva.data.PVAShortArray;
 import org.epics.pva.data.PVAString;
 import org.epics.pva.data.PVAStructure;
@@ -39,6 +41,7 @@ import org.epics.vtype.VNumber;
 import org.epics.vtype.VShortArray;
 import org.epics.vtype.VString;
 import org.epics.vtype.VType;
+import org.phoebus.pv.PV;
 
 /** Data utility to convert {@link VType} to {@link PVAStructure} (normative type)
  *  @author Kay Kasemir
@@ -217,5 +220,30 @@ public class DataUtil
             throw new Exception("Value type is not handled: " + new_value);
 
         updateDisplay(data, new_value);
+    }
+
+    /** Write data received on server side back to client
+     *  @param client_pv Client side (CA) PV
+     *  @param data Data received on server side
+     *  @throws Exception on error
+     */
+    public static void writeCA_PV(final PV client_pv, final PVAStructure data) throws Exception
+    {
+        final PVAData value = data.get("value");
+        if (value instanceof PVADouble val)
+            client_pv.write(val.get());
+        else if (value instanceof PVANumber val)
+            client_pv.write(val.getNumber().longValue());
+        else if (value instanceof PVAStructure val  &&
+                 val.getStructureName().equals("enum_t"))
+        {
+            final PVAInt index = val.get("index");
+            client_pv.write(index.get());
+        }
+        else if (value instanceof PVAString val)
+            client_pv.write(val.get());
+        // TODO Handle more data types
+        else
+            throw new Exception("Data type not handled: " + data + (data != null ? " (" + data.getClass() + ")" : ""));
     }
 }

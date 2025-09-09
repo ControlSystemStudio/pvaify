@@ -10,11 +10,13 @@ package org.phoebus.pvaify;
 import static org.phoebus.pvaify.Proxy.logger;
 
 import java.net.InetSocketAddress;
+import java.util.BitSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 
+import org.epics.pva.common.TCPHandler;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.server.ServerPV;
 import org.epics.vtype.VType;
@@ -198,12 +200,43 @@ class ProxiedPV
     private ServerPV createServerPV(final String name, final VType value) throws Exception
     {
         server_data = DataUtil.create(name, value);
-        final ServerPV spv = proxy.server.createPV(name, server_data);
-        // TODO Set PV to read-only, then update as write access changes
-        // client_pv.isReadonly();
-        // client_pv.onAccessRightsEvent().subscribe();
-        // ... once PVAccess protocol supports read/write access information
+
+
+        final ServerPV spv;
+        if (ProxyPreferences.readonly  ||  client_pv.isReadonly())
+            spv = proxy.server.createPV(name, server_data);
+        else
+            spv = proxy.server.createPV(name, server_data, this::handleWrite);
+        // TODO Dynamic write access
+        // For now, server PV write access is determined once upon PV creation.
+        // If ProxyPreferences.readonly==false, should always
+        // register handleWrite and update as write access changes
+        //        client_pv.onAccessRightsEvent().subscribe(writable ->
+        //        {
+        //            server_pv.setWriteAccess(writable);
+        //        });
+        // ... once PVAccess protocol supports updating the read/write access information
+
         return spv;
+    }
+
+    /** Handle write access on server side
+     *  @param tcp TCP connection to server-side client
+     *  @param spv PV that was written
+     *  @param changes Bitmap of changes
+     *  @param data Data that was written
+     */
+    private void handleWrite(TCPHandler tcp, ServerPV spv, BitSet changes, PVAStructure data)
+    {
+        logger.log(Level.FINE, () -> tcp.getRemoteAddress() + " wrote " + spv.getName() + " = " + data.get("value"));
+        try
+        {
+            DataUtil.writeCA_PV(client_pv, data);
+        }
+        catch (Exception ex)
+        {
+            logger.log(Level.WARNING, "Cannot write " + spv.getName(), ex);
+        }
     }
 
     public void close()
