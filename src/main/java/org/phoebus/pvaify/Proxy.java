@@ -122,14 +122,6 @@ class Proxy
         return false;
     }
 
-    /** @param pv {@link ProxiedPV} that has been disposed and should no longer been tracked */
-    void forgetProxiedPV(final ProxiedPV pv)
-    {
-        if (! pvs.remove(pv.getName(), pv))
-            logger.log(Level.WARNING, "Tried to forget unknown PV " + pv.getName(),
-                       new Exception("Stack trace"));
-    }
-
     /** @return List of disconnected PV names */
     String[] getDisconnectedPVs()
     {
@@ -167,7 +159,15 @@ class Proxy
                     pv.getSecsInState() > ProxyPreferences.unused_pv_purge_sec)
                 {
                     logger.log(Level.FINER, () -> "Removing unused proxy " + pv);
-                    pv.close();
+                    // Atomically remove 'pv' for the name, then close.
+                    // A new search might create a new pv for the same name right after 'remove'.
+                    // We'd still continue and close the _original_ pv for that name,
+                    // allowing the new one to start up in parallel
+                    if (pvs.remove(pv.getName(), pv))
+                        pv.close();
+                    else
+                        logger.log(Level.WARNING, "Tried to remove unknown PV " + pv.getName(),
+                                   new Exception("Stack trace"));
                 }
             }
 

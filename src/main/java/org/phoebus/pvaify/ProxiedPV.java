@@ -239,26 +239,30 @@ class ProxiedPV
         }
     }
 
-    public void close()
+    /** Close both the server and client side */
+    void close()
     {
-        // TODO Correct order of cleanup?
-
         // Mark as disposed so further client updates will be ignored
         state.set(ProxiedPVState.State.Disposed);
 
-        // Proxy is unused right now, but there could be a new request on the way...
-        // Unregister so further requests will create a new proxy
-        proxy.forgetProxiedPV(this);
-
-        // Now that this proxy is basically orphaned, stop client ...
+        // Stop client ...
         if (client_sub != null)
+        {
             client_sub.dispose();
+            client_sub = null;
+        }
         if (client_pv != null)
+        {
             PVPool.releasePV(client_pv);
+            client_pv = null;
+        }
+
         // ... then server side (if we got as far as creating one)
         if (server_pv != null)
+        {
             server_pv.close();
-
+            server_pv = null;
+        }
         logger.log(Level.FINE, () -> "<<-------- Disposed " + this);
     }
 
