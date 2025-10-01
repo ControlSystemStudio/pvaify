@@ -1,3 +1,5 @@
+# softIoc -d demo.db -a demo.acf
+
 record(calc, "demo:ai1")
 {
     field(SCAN, "1 second")

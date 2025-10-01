@@ -1,0 +1,11 @@
+# Access control configuration
+
+ASG (DEFAULT)
+{
+  INPA(demo:ai1)
+  RULE(1, READ)
+  RULE(1, WRITE)
+  {
+    CALC(A<8)
+  }  
+}
