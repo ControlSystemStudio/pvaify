@@ -92,6 +92,9 @@ PVA server side of proxy, and overall proxy settings.
 ./pvaify.sh -settings demo/pvaify.ini
 ```
 
+Add `-logging /path/to/logging.properties` to configure logging,
+see `src/main/resources/logging.properties` for an example.
+
 
 Configuring clients to use PVA-i-fy
 -----------------------------------

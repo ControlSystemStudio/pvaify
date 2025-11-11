@@ -47,11 +47,17 @@ public class Main
                                 "EPICS_PVAS_TLS_PORT",
                                 "EPICS_PVAS_INTF_ADDR_LIST",
                                 "EPICS_PVAS_TLS_KEYCHAIN",
-                                "EPICS_PVAS_TLS_OPTIONS"))
+                                "EPICS_PVAS_TLS_OPTIONS",
+                                "EPICS_PVA_ADDR_LIST",
+                                "EPICS_PVA_AUTO_ADDR_LIST"))
         {   // If there is a /org/phoebus/pv/pva/epics_pva_abc setting, turn into EPICS_PVA_ABC property for core-pva
-            final String value = pva_prefs.get(pref.toLowerCase(), null);
+            String value = pva_prefs.get(pref.toLowerCase(), null);
             if (value != null)
+            {   // Patch true/false for this one 'boolean' property into YES/NO
+                if ("EPICS_PVA_AUTO_ADDR_LIST".equals(pref))
+                    value = value.replace("false", "NO").replace("true", "YES");
                 System.setProperty(pref, value);
+            }
         }
     }
 
