@@ -8,6 +8,7 @@ Z=pvaify.zip
 rm -rf $D
 mkdir $D
 cp README.MD pvaify.sh $D
+cp *.png $D
 cp target/pvaify-*.jar $D
 mkdir $D/lib
 cp -r target/lib/*.jar $D/lib
