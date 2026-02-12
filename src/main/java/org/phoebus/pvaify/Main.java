@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025 Oak Ridge National Laboratory.
+ * Copyright (c) 2025-2026 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,6 +14,9 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
+import org.epics.pva.acf.AccessConfig;
+import org.epics.pva.acf.AccessConfigParser;
+import org.epics.pva.pvlist.PVListFile;
 import org.phoebus.framework.preferences.PropertyPreferenceLoader;
 
 /** Proxy from CA (VType PV) to PVAccess
@@ -28,6 +31,7 @@ public class Main
         System.out.println("-help                       - This text");
         System.out.println("-settings settings.ini      - Import settings from file");
         System.out.println("-pvlist settings.pvlist     - PV name filters");
+        System.out.println("-acf settings.acf           - Access security configuration file");
         System.out.println("-logging logging.properties - Logging configuration");
         System.out.println();
     }
@@ -79,7 +83,8 @@ public class Main
         LogManager.getLogManager().readConfiguration(Main.class.getResourceAsStream("/logging.properties"));
         Proxy.logger = Logger.getLogger(Main.class.getPackageName());
 
-        PVListFile pvlist = null;
+        PVListFile pvlist = PVListFile.getDefault();
+        AccessConfig access = AccessConfig.getDefault();
 
         // Parse command line args
         for (int i=0; i<args.length; ++i)
@@ -112,6 +117,18 @@ public class Main
                 Proxy.logger.log(Level.CONFIG, "PVList rules:\n" + pvlist);
                 ++i;
             }
+            else if (args[i].startsWith("-acf"))
+            {
+                if (i+1 >= args.length)
+                {
+                    help();
+                    System.err.println("Missing -acf filename");
+                    return;
+                }
+                access = new AccessConfigParser().parse(args[i+1]);
+                Proxy.logger.log(Level.CONFIG, "ACF rules:\n" + access);
+                ++i;
+            }
             else if (args[i].startsWith("-log"))
             {
                 if (i+1 >= args.length)
@@ -134,7 +151,7 @@ public class Main
 
         configPVAfromPreferences();
 
-        final Proxy proxy = new Proxy(ProxyPreferences.prefix, pvlist);
+        final Proxy proxy = new Proxy(ProxyPreferences.prefix, pvlist, access);
         proxy.mainLoop();
         proxy.close();
     }

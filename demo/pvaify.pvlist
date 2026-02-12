@@ -31,10 +31,12 @@ Ignore:.*   DENY
 .*          DENY FROM 11.12.13.14
 
 # Then list ALLOW statements, where matching PVs are accepted.
+#
+# When no access group is given, these PVs will be in the DEFAULT group
 
 #SomePV     ALLOW
-#Vac:.*     ALLOW
+.*:bool     ALLOW
 
-# If a PV does not match any ALLOW rule, it is DENYed,
-# so add this if there are no specific ALLOW patters
-.*          ALLOW
+# If a PV does not match any ALLOW rule, it is DENYed.
+# End with a catch-all that places such PVs in the READONLY group
+.*          ALLOW READONLY

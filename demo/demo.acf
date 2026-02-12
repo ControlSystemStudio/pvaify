@@ -1,5 +1,10 @@
 # Access control configuration
 
+# IOC will allow write access to any PV
+# but briefly change them to read-only,
+# simulating a machine where PVs are
+# sometimes read-only, for example while
+# in a certain machine mode
 ASG (DEFAULT)
 {
   INPA(demo:ai1)

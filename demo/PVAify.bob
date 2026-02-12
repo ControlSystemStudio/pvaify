@@ -2,7 +2,7 @@
 <display version="2.0.0">
   <name>PVA-i-fy</name>
   <macros>
-    <P>proxy:</P>
+    <P>pva://pvaify:</P>
   </macros>
   <width>560</width>
   <height>870</height>
