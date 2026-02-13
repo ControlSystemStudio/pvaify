@@ -1,7 +1,7 @@
 PVA-i-fy
 ========
 
-Prototype of a proxy that allows reading Channel Access (CA) PVs via PV Access (PVA).
+Prototype of a proxy that allows reading and writing Channel Access (CA) PVs via PV Access (PVA).
 
 <img src="pvaify_simple.png" width=40%>
 
@@ -19,11 +19,14 @@ then provides the data received from CA as PVA PVs.
 
  1. PVA client searches for PV.
  2. The PVA server side of PVA-i-fy receives that search.
+    Based on a `*.pvlist` file,
+    it will ignore (DENY) or accept (ALLOW) the search.
+    Assume that the search is allowed.
     PVA-i-fy does not reply to the search, yet,
     since it knows nothing about the PV.
- 3. PVA-i-fy creates CA client PV.
- 4. CA client PV connects to IOC, gets first sample.
- 5. PVA-i-fy creates PVA server PV with that sample as initial value.
+ 3. PVA-i-fy creates a CA client PV.
+ 4. The CA client PV connects to IOC, gets a first sample.
+ 5. PVA-i-fy creates a PVA server PV with that sample as its initial value.
  6. PVA server replies to the search request.
     In the meantime, the client may have issued another search.
     Since the PVA server is now aware of that PV, it will reply right away.
@@ -38,8 +41,8 @@ during the potentially long update to EPICS 7 and PVA.
 
 On the outside network, PVA is prepared for IPv6 as well as Transport Layer Security (TLS)
 to support today's network requirements.
-The proxy is for now read-only and TLS authentication may not seem necessary,
-but by introducing TLS now, outside clients are prepared to eventually adding
+When the proxy is read-only, TLS authentication may not seem necessary,
+but by introducing TLS now, outside clients are prepared to eventually enabling
 authenticated and authorized write access.
 
 
@@ -61,7 +64,7 @@ To use the latest PVA and PV pool
 sources, compile them locally: 
 
 ```
-git clone https://github.com/ControlSystemStudio/phoebus.git
+git clone https://github.com/ControlSystemStudio/phoebus
 cd phoebus
 mvn -DskipTests=true clean install
 cd ..
@@ -70,7 +73,7 @@ cd ..
 Then build the proxy:
 
 ```
-git clone https://github.com/ControlSystemStudio/pvaify.git
+git clone https://github.com/ControlSystemStudio/pvaify
 cd pvaify
 mvn -DskipTests=true clean package 
 ```
@@ -82,18 +85,52 @@ For distribution, zip the relevant components:
 ```
 
 
+Example Setup
+-------------
+
+Start the example IOC to provide test PVs.
+Use `softIoc` to only provide channel access PVs,
+not `softIocPVA` or `softIocPVX` which would already
+support PV Access.
+
+```
+softIoc -d demo/demo.db -a demo/demo.acf
+```
+
+In CS-Studio, open `demo/demo.bob`.
+
+ * Channel Access PVs should connect
+ * PV Access PVs should  __not__  connect, yet
+ * "Controller" button gets disabled while the "Counter" is at 8 of above.
+
+
 Running PVA-i-fy
 ----------------
 
-Check `pvaify.ini` for settings related to CA client side of proxy,
-PVA server side of proxy, and overall proxy settings.
-
 ```
-./pvaify.sh -settings demo/pvaify.ini
+./pvaify.sh -settings demo/pvaify.ini -pvlist demo/pvaify.pvlist -acf demo/pvaify.acf
 ```
 
 Add `-logging /path/to/logging.properties` to configure logging,
 see `demo/logging.properties` for an example.
+
+In the CS-Studio display,
+
+ * PV Access PVs should now also connect
+ * Does the "Controller" button for PV Access enable
+   and disable in the same way as the button using Channel Access?
+
+To get write access via PV Access:
+
+ * In `demo/pvaify.ini`, look for `org.phoebus.pvaify/readonly`.
+   Set it to `false`
+ * In `demo/pvaify.pvlist`, note that `.*:bool ALLOW`
+   fundamentally allows access to the `...:bool` PV used by the
+   "Controller" button. Since no access group is listed,
+   the PV will be in the `DEFAULT` access group.
+ * In `demo/pvaify.acf`, check the definition of the `ASG (DEFAULT)`.
+   It only grants write access to `operators`.
+   Add your user ID to `UAG(operators)`.
 
 
 Configuring clients to use PVA-i-fy
@@ -191,10 +228,61 @@ Controlling which PVs are Proxied
 ---------------------------------
 
 By default, the proxy will try to mirror any PV name.
-You may want to control which PVs a proxy handles and which it ignores.
+You likely need to control which PVs a proxy handles and which it ignores.
 For example, you may want to run a designated proxy that only
 mirrors vacuum PVs, identified by PV names that start with "Vac:...".
 See `demo/pvaify.pvlist` for details. 
+
+
+Read/write access details
+-------------------------
+
+EPICS IOCs control write access based on the `ASG` record fields
+and the Access security Configuration File (`*.acf`) used by the IOC.
+This remains unchanged, but there are two caveats.
+First, channel access has only weak authentication. The IOC cannot be sure
+what user is connecting.
+Second, when a user is accessing PVs via the proxy, the IOC does not see that user name.
+Instead, the proxy sees the name of the user who is running the proxy.
+Only the proxy sees the name of the actual user.
+
+A layered approach ensures that, in addition to the IOC’s internal security,
+the proxy adds extra checks to properly manage write access.
+
+<img src="pvaify_access.png" width=60%>
+
+ 1. The PVA proxy can be set to read-only or allow writes.
+ 
+ 2. The next layer of access control is the `pvlist` mechanism described
+    in the previous section.
+    If a PV is denied, it is completely ignored by the proxy.
+    If allowed, it is assigned to an access security group
+    (or to the `DEFAULT`  group if none is specified) and then proxied.
+   
+ 3. For PVs that are successfully proxied, PVA-i-fy always provides
+    read access. Write access is granted by proxy `acf` rules based on the
+    access group of the PV, the client authentication and the client's
+    host.
+
+ 4. The IOC assigns PVs to access groups based on the `ASG` record fields.
+ 
+ 5. The IOC grants write access based on its own IOC `acf` rules.
+
+To reiterate, the IOC does not know the actual user nor its host.
+As with CA or PVA gateways, the IOC sees the proxy as a user, running on the proxy's host.
+The `acf` rules on the IOC control write access from the proxy to the IOC.
+The PVA server side of the proxy sees the actual user.
+With open PVA, the client authentication is as weak as channel access
+authentication. With secure PVA, the client authentication to the proxy can be trusted,
+and meaningful access control can be configured in the proxy `acf` rules.
+
+In summary, to write through the proxy, the proxy needs to allow writes via
+its global setting, `pvlist` and `acf`, and the IOC needs to allow writes
+by the proxy via its `acf` and record `ASG` fields.
+The IOC `acf` should be used to configure dynamic access rules, for example
+to disable write access to certain PVs while the machine is running.
+The proxy `acf` should by default limit access and selectively open
+write access for for selected users.  
 
 
 Internals
@@ -238,8 +326,8 @@ Implementation Progress
 - [ ] Is there a practical way to turn the CA waveforms and scalars for an areadetector
       image into a PVA image?
 - [X] Basic global on/off write access
-- [ ] Dynamic write access that reflects if CA PV is writable
-- [ ] Write access rules for controlled write access
+- [X] Dynamic write access that reflects if CA PV is writable
+- [X] Write access `*.acf` rules for controlled write access
 - [ ] As control system devices start to directly support PVA and a PVA gateway is added,
       how could PVA-i-fy coexist with a PVA gateway?
       PVA-i-fy needs to ignore PVs available on PVA gateway and vice versa!

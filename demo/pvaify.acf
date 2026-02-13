@@ -1,0 +1,21 @@
+# Access control configuration
+
+# !! YOU MAY NEED TO ADD YOUR NAME TO THIS USER GROUP!!
+UAG(operators) { Fred, root }
+
+# For PVs in the DEFAULT access group,
+# limit write access to operators
+ASG (DEFAULT)
+{
+  RULE(1, READ)
+  RULE(1, WRITE)
+  {
+    UAG(operators)
+  }  
+}
+
+# Create a READONLY group that's always, well, read-only
+ASG (READONLY)
+{
+  RULE(1, READ)
+}

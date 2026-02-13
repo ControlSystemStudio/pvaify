@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025 Oak Ridge National Laboratory.
+ * Copyright (c) 2025-2026 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,9 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.epics.pva.acf.AccessConfig;
+import org.epics.pva.pvlist.PVListFile;
+import org.epics.pva.server.FileBasedServerAuthorization;
 import org.epics.pva.server.PVAServer;
 
 /** Proxy from CA (really PV pool VType PV) to PVAccess
@@ -57,11 +60,16 @@ class Proxy
     /** Counter for updates sent to server side */
     final AtomicInteger server_update_counter = new AtomicInteger();
 
-    public Proxy(final String prefix, final PVListFile pvlist) throws Exception
+    /** @param prefix Prefix for status PVs
+     *  @param pvlist {@link PVListFile}
+     *  @param access {@link AccessConfig}
+     */
+    public Proxy(final String prefix, final PVListFile pvlist, final AccessConfig access) throws Exception
     {
         this.pvlist = pvlist;
         client_update_cache = new ClientUpdateCache();
         server = new PVAServer(this::handleSearchRequest);
+        server.configureAuthorization(new FileBasedServerAuthorization(pvlist, access));
         info = new ProxyInfo(prefix, this);
     }
 
@@ -83,7 +91,7 @@ class Proxy
         search_counter.incrementAndGet();
 
         // Is PV filtered out? Then return true to pretend we handled it (by ignoring it)
-        if (pvlist != null  &&  !pvlist.mayAccess(name, client.getAddress()))
+        if (pvlist != null  &&  pvlist.getAccess(name, client.getAddress()) == null)
             return true;
 
         // TODO Make this one of the status/control PVs
