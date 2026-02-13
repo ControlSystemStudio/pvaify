@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 
+import org.epics.pva.data.PVAArray;
 import org.epics.pva.data.PVAByteArray;
 import org.epics.pva.data.PVAData;
 import org.epics.pva.data.PVADouble;
@@ -196,7 +197,14 @@ public class DataUtil
 
         final PVAData value = data.get("value");
         if (new_value instanceof VDouble val)
-            value.setValue(val.getValue().doubleValue());
+        {
+            // Disconnected PV sends scalar NaN with INVALID/Disconnected alarm
+            // Turn into array to be compatible with data's value
+            if (Double.isNaN(val.getValue())  &&  value instanceof PVAArray)
+                value.setValue(new double[] { Double.NaN });
+            else
+                value.setValue(val.getValue().doubleValue());
+        }
         else if (new_value instanceof VNumber val)
             value.setValue(val.getValue().intValue());
         else if (new_value instanceof VString val)
