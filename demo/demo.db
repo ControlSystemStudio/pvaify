@@ -47,3 +47,19 @@ record(int64in, "large")
 {
 }
 
+record(stringin, "demo:text")
+{
+    field(ASG,  "ALWAYS")
+    field(INP , {const: "Hello!"})
+    field(PINI, "YES")
+}
+
+record(waveform, "demo:legacy_text")
+{
+    field(ASG,  "ALWAYS")
+    field(DESC, "Legacy 'long text'")
+    field(FTVL, "CHAR")
+    field(NELM, "500")
+    field(INP , {const: [72, 101, 108, 108, 111, 33]})
+    field(PINI, "YES")
+}

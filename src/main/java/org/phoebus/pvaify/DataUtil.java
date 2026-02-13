@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2025 Oak Ridge National Laboratory.
+ * Copyright (c) 2025-2026 Oak Ridge National Laboratory.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,7 @@ import org.epics.pva.data.PVADoubleArray;
 import org.epics.pva.data.PVAFloatArray;
 import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAIntArray;
+import org.epics.pva.data.PVALongArray;
 import org.epics.pva.data.PVANumber;
 import org.epics.pva.data.PVAShortArray;
 import org.epics.pva.data.PVAString;
@@ -241,6 +242,18 @@ public class DataUtil
             client_pv.write(index.get());
         }
         else if (value instanceof PVAString val)
+            client_pv.write(val.get());
+        else if (value instanceof PVAByteArray val)
+            client_pv.write(val.get());
+        else if (value instanceof PVAShortArray val)
+            client_pv.write(val.get());
+        else if (value instanceof PVAIntArray val)
+            client_pv.write(val.get());
+        else if (value instanceof PVALongArray val)
+            client_pv.write(val.get());
+        else if (value instanceof PVAFloatArray val)
+            client_pv.write(val.get());
+        else if (value instanceof PVADoubleArray val)
             client_pv.write(val.get());
         // TODO Handle more data types
         else

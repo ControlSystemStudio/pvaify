@@ -14,3 +14,9 @@ ASG (DEFAULT)
     CALC(A<8)
   }  
 }
+
+ASG (ALWAYS)
+{
+  RULE(1, READ)
+  RULE(1, WRITE)
+}

@@ -36,6 +36,7 @@ Ignore:.*   DENY
 
 #SomePV     ALLOW
 .*:bool     ALLOW
+.*text      ALLOW
 
 # If a PV does not match any ALLOW rule, it is DENYed.
 # End with a catch-all that places such PVs in the READONLY group

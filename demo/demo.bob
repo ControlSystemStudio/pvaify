@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <display version="2.0.0">
   <name>Demo Display</name>
-  <width>550</width>
-  <height>140</height>
+  <width>600</width>
+  <height>280</height>
   <widget type="label" version="2.0.0">
     <name>Label</name>
     <class>TITLE</class>
@@ -31,7 +31,7 @@
   <widget type="label" version="2.0.0">
     <name>Label_2</name>
     <text>PV Access</text>
-    <x>220</x>
+    <x>280</x>
     <y>50</y>
     <width>110</width>
   </widget>
@@ -50,7 +50,7 @@
   <widget type="textupdate" version="2.0.0">
     <name>Text Update_1</name>
     <pv_name>pva://demo:ai1</pv_name>
-    <x>220</x>
+    <x>280</x>
     <y>80</y>
   </widget>
   <widget type="label" version="2.0.0">
@@ -58,6 +58,8 @@
     <text>Controller:</text>
     <y>110</y>
     <width>70</width>
+    <height>30</height>
+    <vertical_alignment>1</vertical_alignment>
   </widget>
   <widget type="bool_button" version="2.0.0">
     <name>Boolean Button</name>
@@ -68,7 +70,92 @@
   <widget type="bool_button" version="2.0.0">
     <name>Boolean Button_1</name>
     <pv_name>pva://demo:bool</pv_name>
-    <x>220</x>
+    <x>280</x>
     <y>110</y>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_6</name>
+    <text>String:</text>
+    <y>150</y>
+    <width>70</width>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Text Entry_2</name>
+    <pv_name>demo:text</pv_name>
+    <x>80</x>
+    <y>150</y>
+    <width>130</width>
+    <vertical_alignment>0</vertical_alignment>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Text Entry_3</name>
+    <pv_name>pva://demo:text</pv_name>
+    <x>280</x>
+    <y>150</y>
+    <width>160</width>
+    <format>6</format>
+    <vertical_alignment>0</vertical_alignment>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_7</name>
+    <text>Char[]:</text>
+    <y>180</y>
+    <width>70</width>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Text Entry</name>
+    <pv_name>demo:legacy_text</pv_name>
+    <x>80</x>
+    <y>180</y>
+    <width>190</width>
+    <height>100</height>
+    <format>6</format>
+    <vertical_alignment>0</vertical_alignment>
+    <wrap_words>true</wrap_words>
+    <multi_line>true</multi_line>
+  </widget>
+  <widget type="textentry" version="3.0.0">
+    <name>Text Entry_1</name>
+    <pv_name>pva://demo:legacy_text</pv_name>
+    <x>280</x>
+    <y>180</y>
+    <width>190</width>
+    <height>100</height>
+    <format>6</format>
+    <vertical_alignment>0</vertical_alignment>
+    <wrap_words>true</wrap_words>
+    <multi_line>true</multi_line>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_5</name>
+    <text>For multi-line text, press Alt-Enter to submit</text>
+    <x>480</x>
+    <y>180</y>
+    <width>120</width>
+    <height>100</height>
+    <font>
+      <font name="Fine Print" family="Liberation Sans" style="REGULAR" size="12.0">
+      </font>
+    </font>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_8</name>
+    <text>Double[]:</text>
+    <y>290</y>
+    <width>70</width>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_2</name>
+    <pv_name>demo:wf1</pv_name>
+    <x>80</x>
+    <y>290</y>
+    <width>190</width>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_3</name>
+    <pv_name>pva://demo:wf1</pv_name>
+    <x>280</x>
+    <y>290</y>
+    <width>190</width>
   </widget>
 </display>
